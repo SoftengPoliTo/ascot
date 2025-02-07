@@ -10,12 +10,13 @@ resolver = "2"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ascot_library.version = "0.1.0"
-ascot_library.path = { ".." }
-ascot_library.default-features = false
+ascot-library.version = "0.1.0"
+ascot-library.path = ".."
+ascot-library.default-features = false
 
 heapless.version = "0.8.0"
 heapless.default-features = false
+heapless.features = ["serde"]
 
 serde.version = "1.0"
 serde.default-features = false

@@ -1,6 +1,26 @@
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use ascot_library::actions::ActionError;
 
-use crate::string::String;
+use serde::{Deserialize, Serialize};
+
+use crate::device::DeviceInfo;
+use crate::utils::string::String;
+
+/// Informative response.
+///
+/// This response provides economy and energy information of a device.
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+pub struct InfoResponse<const N: usize> {
+    #[serde(flatten)]
+    data: DeviceInfo<N>,
+}
+
+impl<const N: usize> InfoResponse<N> {
+    /// Creates a [`InfoResponse`].
+    #[must_use]
+    pub const fn new(data: DeviceInfo<N>) -> Self {
+        Self { data }
+    }
+}
 
 /// A response containing structured information about an error occurred during
 /// the execution of an action.
@@ -16,7 +36,7 @@ pub struct ErrorResponse<const N: usize> {
     pub info: Option<String<N>>,
 }
 
-impl ErrorResponse {
+impl<const N: usize> ErrorResponse<N> {
     /// Creates an [`ErrorResponse`] with a specific [`ActionError`] and
     /// a description.
     ///
@@ -94,13 +114,13 @@ impl ErrorResponse {
 mod tests {
     use crate::{deserialize, serialize};
 
-    use ascot::actions::ActionError;
+    use ascot_library::actions::ActionError;
 
-    use super::String;
+    use super::{ErrorResponse, String};
 
     #[test]
     fn test_error_response() {
-        let error = ErrorResponse<32>::with_description(
+        let error = ErrorResponse::<32>::with_description(
             ActionError::InvalidData,
             "Invalid data error description",
         );

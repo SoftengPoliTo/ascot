@@ -1,9 +1,9 @@
 use serde::{Deserialize, Serialize};
 
-use crate::collections::{Collection, SerialCollection};
+use crate::utils::collections::{Collection, SerialCollection};
 
 /// An [`Input`] structure.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum InputStructure {
     /// A [`bool`] value.
     Bool {
@@ -113,7 +113,7 @@ impl InputData {
 }
 
 /// A collection of [`InputData`]s.
-pub type InputsData<const N: usize> = SerialCollection<N, InputData>;
+pub type InputsData<const N: usize> = SerialCollection<InputData, N>;
 
 /// All supported inputs.
 #[derive(Debug, Clone, Copy)]
@@ -261,7 +261,7 @@ impl Input {
 }
 
 /// A collection of [`Input`]s.
-pub type Inputs<const N: usize> = Collection<N, Input>;
+pub type Inputs<const N: usize> = Collection<Input, N>;
 
 #[cfg(test)]
 mod tests {

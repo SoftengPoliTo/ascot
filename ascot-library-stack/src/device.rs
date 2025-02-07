@@ -1,4 +1,5 @@
-use ascot::device::{DeviceEnvironment, DeviceKind};
+use ascot_library::device::{DeviceEnvironment, DeviceKind};
+
 use serde::{Deserialize, Serialize};
 
 use crate::economy::Economy;

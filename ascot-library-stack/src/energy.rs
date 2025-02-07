@@ -1,13 +1,13 @@
-use ascot::energy::{CarbonFootprint, EnergyEfficiencies};
+use ascot_library::energy::{CarbonFootprint, EnergyEfficiency, WaterUseEfficiency};
 use serde::{Deserialize, Serialize};
 
-use crate::collections::OutputCollection;
+use crate::utils::collections::OutputCollection;
 
 /// A collection of [`EnergyEfficiency`]s.
-pub type EnergyEfficiencies<const N: usize> = OutputCollection<EnergyEfficiency<N>>;
+pub type EnergyEfficiencies<const N: usize> = OutputCollection<EnergyEfficiency, N>;
 
 /// A collection of [`CarbonFootprints`]s.
-pub type CarbonFootprints<const N: usize> = OutputCollection<CarbonFootprint<N>>;
+pub type CarbonFootprints<const N: usize> = OutputCollection<CarbonFootprint, N>;
 
 /// Energy information of a device.
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
@@ -62,9 +62,7 @@ impl<const N: usize> Energy<N> {
     /// Creates a new [`Energy`] instance initialized with
     /// [`WaterUseEfficiency`] data.
     #[must_use]
-    pub const fn init_with_water_use_efficiency(
-        water_use_efficiency: WaterUseEfficiency<N>,
-    ) -> Self {
+    pub const fn init_with_water_use_efficiency(water_use_efficiency: WaterUseEfficiency) -> Self {
         Self {
             energy_efficiencies: None,
             carbon_footprints: None,
@@ -90,10 +88,7 @@ impl<const N: usize> Energy<N> {
 
     /// Adds [`WaterUseEfficiency`] data.
     #[must_use]
-    pub const fn water_use_efficiency(
-        mut self,
-        water_use_efficiency: WaterUseEfficiency<N>,
-    ) -> Self {
+    pub const fn water_use_efficiency(mut self, water_use_efficiency: WaterUseEfficiency) -> Self {
         self.water_use_efficiency = Some(water_use_efficiency);
         self
     }

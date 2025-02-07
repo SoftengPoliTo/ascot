@@ -1,13 +1,14 @@
 use core::hash::{Hash, Hasher};
 
-use ascot::response::ResponseKind;
-use ascot::route::RestKind;
+use ascot_library::hazards::Hazard;
+use ascot_library::response::ResponseKind;
+use ascot_library::route::RestKind;
 
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
-use crate::collections::{Collection, SerialCollection};
-use crate::hazards::{Hazard, Hazards};
+use crate::hazards::Hazards;
 use crate::input::{Input, Inputs, InputsData};
+use crate::utils::collections::{Collection, SerialCollection};
 
 /// Route data.
 #[derive(Debug, Clone, Serialize)]
@@ -33,7 +34,7 @@ impl<const N: usize> PartialEq for RouteData<N> {
 }
 
 impl<const N: usize> RouteData<N> {
-    fn new(route: Route) -> Self {
+    fn new(route: Route<N>) -> Self {
         Self {
             name: route.route,
             description: route.description,
@@ -58,7 +59,7 @@ pub struct RouteConfig<const N: usize> {
 }
 
 /// A collection of [`RouteConfig`]s.
-pub type RouteConfigs = crate::collections::SerialCollection<RouteConfig>;
+pub type RouteConfigs<const N: usize> = SerialCollection<RouteConfig<N>, N>;
 
 impl<const N: usize> PartialEq for RouteConfig<N> {
     fn eq(&self, other: &Self) -> bool {
@@ -68,7 +69,7 @@ impl<const N: usize> PartialEq for RouteConfig<N> {
 
 impl<const N: usize> Eq for RouteConfig<N> {}
 
-impl<const N: usize> Hash for RouteConfig<const N: usize> {
+impl<const N: usize> Hash for RouteConfig<N> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.data.name.hash(state);
         self.rest_kind.hash(state);
@@ -164,7 +165,7 @@ impl<const N: usize> Route<N> {
     /// Adds a single [`Input`] to a [`Route`].
     #[must_use]
     #[inline]
-    pub fn with_input(mut self, input: Input<N>) -> Self {
+    pub fn with_input(mut self, input: Input) -> Self {
         self.inputs.add(input);
         self
     }
@@ -248,7 +249,7 @@ impl<const N: usize> Route<N> {
 }
 
 /// A collection of [`Route`]s.
-pub type Routes<const N: usize> = Collection<N, Route>;
+pub type Routes<const N: usize> = Collection<Route<N>, N>;
 
 #[cfg(test)]
 mod tests {

@@ -1,13 +1,13 @@
-use ascot::economy::{Cost, Roi};
+use ascot_library::economy::{Cost, Roi};
 use serde::{Deserialize, Serialize};
 
-use crate::collections::OutputCollection;
+use crate::utils::collections::OutputCollection;
 
 /// A collection of [`Cost`]s.
-pub type Costs<const N: usize> = OutputCollection<Cost<N>>;
+pub type Costs<const N: usize> = OutputCollection<Cost, N>;
 
 /// A collection of [`Roi`]s.
-pub type Rois<const N: usize> = OutputCollection<Roi>;
+pub type Rois<const N: usize> = OutputCollection<Roi, N>;
 
 /// Economy data for a device.
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
