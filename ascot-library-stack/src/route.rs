@@ -1,13 +1,12 @@
 use core::hash::{Hash, Hasher};
 
-use ascot_library::hazards::Hazard;
 use ascot_library::response::ResponseKind;
 use ascot_library::route::RestKind;
 
 use serde::Serialize;
 
 use crate::hazards::Hazards;
-use crate::input::{Input, Inputs, InputsData};
+use crate::input::{Inputs, InputsData};
 use crate::utils::collections::{Collection, SerialCollection};
 
 /// Route data.
@@ -174,21 +173,11 @@ impl<const N: usize> Route<N> {
         self
     }
 
-    /// Adds a single [`Input`] to a [`Route`].
-    #[must_use]
-    #[inline]
-    pub fn with_input(mut self, input: Input) -> Self {
-        self.inputs.add(input);
-        self
-    }
-
     /// Adds [`Input`] array to a [`Route`].
     #[must_use]
     #[inline]
-    pub fn with_inputs<const NI: usize>(mut self, inputs: [Input; NI]) -> Self {
-        for input in inputs {
-            self.inputs.add(input);
-        }
+    pub fn with_inputs(mut self, inputs: Inputs<N>) -> Self {
+        self.inputs = inputs;
         self
     }
 
@@ -197,22 +186,6 @@ impl<const N: usize> Route<N> {
     #[inline]
     pub fn with_hazards(mut self, hazards: Hazards<N>) -> Self {
         self.hazards = hazards;
-        self
-    }
-
-    /// Adds an [`Hazard`] to a [`Route`].
-    #[must_use]
-    #[inline]
-    pub fn with_hazard(mut self, hazard: Hazard) -> Self {
-        self.hazards = Hazards::init(hazard);
-        self
-    }
-
-    /// Adds a slice of [`Hazard`]s to a [`Route`].
-    #[must_use]
-    #[inline]
-    pub fn with_slice_hazards(mut self, hazards: &'static [Hazard]) -> Self {
-        self.hazards = Hazards::init_with_elements(hazards);
         self
     }
 
@@ -255,11 +228,13 @@ pub type Routes<const N: usize> = Collection<Route<N>, N>;
 
 #[cfg(test)]
 mod tests {
+    use ascot_library::hazards::Hazard;
     use serde_json::json;
 
+    use crate::input::Input;
     use crate::serialize;
 
-    use super::{Hazard, Hazards, Input, Route};
+    use super::{Hazards, Inputs, Route};
 
     #[test]
     fn test_all_routes() {
@@ -324,50 +299,13 @@ mod tests {
     fn test_all_hazards() {
         assert_eq!(
             serialize(
-                Route::<2>::get("/route")
-                    .description("A GET route")
-                    .with_hazard(Hazard::FireHazard)
-                    .serialize_data()
-            ),
-            json!({
-                "name": "/route",
-                "description": "A GET route",
-                "REST kind": "Get",
-                "response kind": "Ok",
-                "hazards": [
-                    "FireHazard"
-                ],
-            })
-        );
-
-        assert_eq!(
-            serialize(
-                Route::<2>::get("/route")
+                Route::get("/route")
                     .description("A GET route")
                     .with_hazards(
                         Hazards::empty()
                             .insert(Hazard::FireHazard)
                             .insert(Hazard::AirPoisoning)
                     )
-                    .serialize_data()
-            ),
-            json!({
-                "name": "/route",
-                "description": "A GET route",
-                "REST kind": "Get",
-                "response kind": "Ok",
-                "hazards": [
-                    "FireHazard",
-                    "AirPoisoning",
-                ],
-            })
-        );
-
-        assert_eq!(
-            serialize(
-                Route::<2>::get("/route")
-                    .description("A GET route")
-                    .with_slice_hazards(&[Hazard::FireHazard, Hazard::AirPoisoning])
                     .serialize_data()
             ),
             json!({
@@ -419,23 +357,13 @@ mod tests {
 
         assert_eq!(
             serialize(
-                Route::<2>::get("/route")
+                Route::get("/route")
                     .description("A GET route")
-                    .with_input(Input::rangeu64_with_default("rangeu64", (0, 20, 1), 5))
-                    .with_input(Input::rangef64("rangef64", (0., 20., 0.1)))
-                    .serialize_data()
-            ),
-            expected
-        );
-
-        assert_eq!(
-            serialize(
-                Route::<2>::get("/route")
-                    .description("A GET route")
-                    .with_inputs([
-                        Input::rangeu64_with_default("rangeu64", (0, 20, 1), 5),
-                        Input::rangef64("rangef64", (0., 20., 0.1))
-                    ])
+                    .with_inputs(
+                        Inputs::empty()
+                            .insert(Input::rangeu64_with_default("rangeu64", (0, 20, 1), 5))
+                            .insert(Input::rangef64("rangef64", (0., 20., 0.1)))
+                    )
                     .serialize_data()
             ),
             expected
