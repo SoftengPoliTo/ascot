@@ -13,17 +13,17 @@ use crate::utils::collections::{Collection, SerialCollection};
 #[derive(Debug, Clone, Serialize)]
 pub struct RouteData<const H: usize, const I: usize> {
     /// Name.
-    pub name: &'static str,
+    name: &'static str,
     /// Description.
-    pub description: Option<&'static str>,
+    description: Option<&'static str>,
     /// Hazards data.
     #[serde(skip_serializing_if = "Hazards::is_empty")]
     #[serde(default = "Hazards::empty")]
-    pub hazards: Hazards<H>,
+    hazards: Hazards<H>,
     /// Inputs associated with a route..
     #[serde(skip_serializing_if = "InputsData::is_empty")]
     #[serde(default = "InputsData::empty")]
-    pub inputs: InputsData<I>,
+    inputs: InputsData<I>,
 }
 
 impl<const H: usize, const I: usize> PartialEq for RouteData<H, I> {
@@ -48,13 +48,13 @@ impl<const H: usize, const I: usize> RouteData<H, I> {
 pub struct RouteConfig<const H: usize, const I: usize> {
     /// Route.
     #[serde(flatten)]
-    pub data: RouteData<H, I>,
+    data: RouteData<H, I>,
     /// **_REST_** kind..
     #[serde(rename = "REST kind")]
-    pub rest_kind: RestKind,
+    rest_kind: RestKind,
     /// Response kind.
     #[serde(rename = "response kind")]
-    pub response_kind: ResponseKind,
+    response_kind: ResponseKind,
 }
 
 impl<const H: usize, const I: usize> PartialEq for RouteConfig<H, I> {
@@ -63,6 +63,7 @@ impl<const H: usize, const I: usize> PartialEq for RouteConfig<H, I> {
     }
 }
 
+// Hazards and inputs prevent Eq trait to be derived.
 impl<const H: usize, const I: usize> Eq for RouteConfig<H, I> {}
 
 impl<const H: usize, const I: usize> Hash for RouteConfig<H, I> {
@@ -110,45 +111,43 @@ impl<const H: usize, const I: usize> PartialEq for Route<H, I> {
     }
 }
 
+// Hazards and inputs prevent Eq trait to be derived.
 impl<const H: usize, const I: usize> Eq for Route<H, I> {}
 
 impl<const H: usize, const I: usize> Hash for Route<H, I> {
     fn hash<Ha: Hasher>(&self, state: &mut Ha) {
         self.route.hash(state);
         self.rest_kind.hash(state);
+        self.description.hash(state);
     }
 }
 
 impl Route<2, 2> {
     /// Creates a new [`Route`] through a REST `GET` API.
     #[must_use]
-    #[inline]
-    pub fn get(route: &'static str) -> Self {
+    pub const fn get(route: &'static str) -> Self {
         Self::init(RestKind::Get, route)
     }
 
     /// Creates a new [`Route`] through a REST `PUT` API.
     #[must_use]
-    #[inline]
-    pub fn put(route: &'static str) -> Self {
+    pub const fn put(route: &'static str) -> Self {
         Self::init(RestKind::Put, route)
     }
 
     /// Creates a new [`Route`] through a REST `POST` API.
     #[must_use]
-    #[inline]
-    pub fn post(route: &'static str) -> Self {
+    pub const fn post(route: &'static str) -> Self {
         Self::init(RestKind::Post, route)
     }
 
     /// Creates a new [`Route`] through a REST `DELETE` API.
     #[must_use]
-    #[inline]
-    pub fn delete(route: &'static str) -> Self {
+    pub const fn delete(route: &'static str) -> Self {
         Self::init(RestKind::Delete, route)
     }
 
-    fn init(rest_kind: RestKind, route: &'static str) -> Self {
+    const fn init(rest_kind: RestKind, route: &'static str) -> Self {
         Route::<2, 2> {
             route,
             rest_kind,
@@ -182,7 +181,7 @@ impl<const H: usize, const I: usize> Route<H, I> {
             route: self.route,
             rest_kind: self.rest_kind,
             description: self.description,
-            hazards: hazards,
+            hazards,
             inputs: self.inputs,
         }
     }
@@ -196,13 +195,13 @@ impl<const H: usize, const I: usize> Route<H, I> {
             rest_kind: self.rest_kind,
             description: self.description,
             hazards: self.hazards,
-            inputs: inputs,
+            inputs,
         }
     }
 
     /// Returns route.
     #[must_use]
-    pub fn route(&self) -> &str {
+    pub const fn route(&self) -> &str {
         self.route
     }
 

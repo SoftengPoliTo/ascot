@@ -77,10 +77,10 @@ pub enum InputStructure {
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct InputData {
     /// Name.
-    pub name: &'static str,
+    name: &'static str,
     /// Input structure.
     #[serde(rename = "structure")]
-    pub structure: InputStructure,
+    structure: InputStructure,
 }
 
 impl core::cmp::PartialEq for InputData {
@@ -89,6 +89,7 @@ impl core::cmp::PartialEq for InputData {
     }
 }
 
+// Floating points in inputs structure prevent Eq trait to be derived.
 impl core::cmp::Eq for InputData {}
 
 impl core::hash::Hash for InputData {
@@ -130,6 +131,7 @@ impl core::cmp::PartialEq for Input {
     }
 }
 
+// Floating points in inputs structure prevent Eq trait to be derived.
 impl core::cmp::Eq for Input {}
 
 impl core::hash::Hash for Input {
@@ -147,8 +149,7 @@ impl Input {
 
     /// Creates a [`bool`] input.
     #[must_use]
-    #[inline]
-    pub fn bool(name: &'static str, default: bool) -> Self {
+    pub const fn bool(name: &'static str, default: bool) -> Self {
         Self {
             name,
             structure: InputStructure::Bool { default },
@@ -157,8 +158,7 @@ impl Input {
 
     /// Creates an [`u8`] input.
     #[must_use]
-    #[inline]
-    pub fn u8(name: &'static str, default: u8) -> Self {
+    pub const fn u8(name: &'static str, default: u8) -> Self {
         Self {
             name,
             structure: InputStructure::U8 { default },
@@ -167,8 +167,7 @@ impl Input {
 
     /// Creates an [`u16`] input.
     #[must_use]
-    #[inline]
-    pub fn u16(name: &'static str, default: u16) -> Self {
+    pub const fn u16(name: &'static str, default: u16) -> Self {
         Self {
             name,
             structure: InputStructure::U16 { default },
@@ -177,8 +176,7 @@ impl Input {
 
     /// Creates an [`u32`] input.
     #[must_use]
-    #[inline]
-    pub fn u32(name: &'static str, default: u32) -> Self {
+    pub const fn u32(name: &'static str, default: u32) -> Self {
         Self {
             name,
             structure: InputStructure::U32 { default },
@@ -187,8 +185,7 @@ impl Input {
 
     /// Creates an [`u64`] input.
     #[must_use]
-    #[inline]
-    pub fn u64(name: &'static str, default: u64) -> Self {
+    pub const fn u64(name: &'static str, default: u64) -> Self {
         Self {
             name,
             structure: InputStructure::U64 { default },
@@ -197,8 +194,7 @@ impl Input {
 
     /// Creates a [`f32`] input.
     #[must_use]
-    #[inline]
-    pub fn f32(name: &'static str, default: f32) -> Self {
+    pub const fn f32(name: &'static str, default: f32) -> Self {
         Self {
             name,
             structure: InputStructure::F32 { default },
@@ -207,8 +203,7 @@ impl Input {
 
     /// Creates a [`f64`] input.
     #[must_use]
-    #[inline]
-    pub fn f64(name: &'static str, default: f64) -> Self {
+    pub const fn f64(name: &'static str, default: f64) -> Self {
         Self {
             name,
             structure: InputStructure::F64 { default },
@@ -217,15 +212,17 @@ impl Input {
 
     /// Creates an [`u64`] range without a default value.
     #[must_use]
-    #[inline]
-    pub fn rangeu64(name: &'static str, range: (u64, u64, u64)) -> Self {
+    pub const fn rangeu64(name: &'static str, range: (u64, u64, u64)) -> Self {
         Self::rangeu64_with_default(name, range, 0)
     }
 
     /// Creates an [`u64`] range with a default value.
     #[must_use]
-    #[inline]
-    pub fn rangeu64_with_default(name: &'static str, range: (u64, u64, u64), default: u64) -> Self {
+    pub const fn rangeu64_with_default(
+        name: &'static str,
+        range: (u64, u64, u64),
+        default: u64,
+    ) -> Self {
         Self {
             name,
             structure: InputStructure::RangeU64 {
@@ -239,15 +236,17 @@ impl Input {
 
     /// Creates an [`f64`] range without a default value.
     #[must_use]
-    #[inline]
-    pub fn rangef64(name: &'static str, range: (f64, f64, f64)) -> Self {
+    pub const fn rangef64(name: &'static str, range: (f64, f64, f64)) -> Self {
         Self::rangef64_with_default(name, range, 0.0)
     }
 
     /// Creates an [`f64`] range with a default value.
     #[must_use]
-    #[inline]
-    pub fn rangef64_with_default(name: &'static str, range: (f64, f64, f64), default: f64) -> Self {
+    pub const fn rangef64_with_default(
+        name: &'static str,
+        range: (f64, f64, f64),
+        default: f64,
+    ) -> Self {
         Self {
             name,
             structure: InputStructure::RangeF64 {

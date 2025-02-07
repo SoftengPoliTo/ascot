@@ -11,16 +11,16 @@ pub type Rois<const N: usize> = OutputCollection<Roi, N>;
 
 /// Economy data for a device.
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
-pub struct Economy<const N: usize> {
+pub struct Economy<const C: usize, const R: usize> {
     /// Costs.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub costs: Option<Costs<N>>,
+    pub costs: Option<Costs<C>>,
     /// Return on investments (ROI).
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub roi: Option<Rois<N>>,
+    pub roi: Option<Rois<R>>,
 }
 
-impl<const N: usize> Economy<N> {
+impl<const C: usize, const R: usize> Economy<C, R> {
     /// Creates an empty [`Economy`] instance.
     #[must_use]
     pub const fn empty() -> Self {
@@ -33,7 +33,7 @@ impl<const N: usize> Economy<N> {
     /// Creates a new [`Economy`] instance initialized with
     /// [`Costs`] data.
     #[must_use]
-    pub const fn init_with_costs(costs: Costs<N>) -> Self {
+    pub const fn init_with_costs(costs: Costs<C>) -> Self {
         Self {
             costs: Some(costs),
             roi: None,
@@ -43,7 +43,7 @@ impl<const N: usize> Economy<N> {
     /// Creates a new [`Economy`] instance initialized with
     /// [`Rois`] data.
     #[must_use]
-    pub const fn init_with_roi(roi: Rois<N>) -> Self {
+    pub const fn init_with_roi(roi: Rois<R>) -> Self {
         Self {
             costs: None,
             roi: Some(roi),
@@ -53,17 +53,21 @@ impl<const N: usize> Economy<N> {
     /// Adds [`Costs`] data.
     #[must_use]
     #[inline]
-    pub fn costs(mut self, costs: Costs<N>) -> Self {
-        self.costs = Some(costs);
-        self
+    pub fn costs<const C2: usize>(self, costs: Costs<C2>) -> Economy<C2, R> {
+        Economy::<C2, R> {
+            costs: Some(costs),
+            roi: self.roi,
+        }
     }
 
     /// Adds [`Rois`] data.
     #[must_use]
     #[inline]
-    pub fn roi(mut self, roi: Rois<N>) -> Self {
-        self.roi = Some(roi);
-        self
+    pub fn rois<const R2: usize>(self, roi: Rois<R2>) -> Economy<C, R2> {
+        Economy::<C, R2> {
+            costs: self.costs,
+            roi: Some(roi),
+        }
     }
 
     /// Checks whether [`Economy`] is **completely** empty.

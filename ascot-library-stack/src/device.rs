@@ -8,7 +8,7 @@ use crate::route::RouteConfigs;
 
 /// Device information.
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
-pub struct DeviceInfo<const N: usize> {
+pub struct DeviceInfo<const C: usize, const R: usize, const N: usize> {
     /// Energy information.
     #[serde(skip_serializing_if = "Energy::is_empty")]
     #[serde(default = "Energy::empty")]
@@ -16,31 +16,42 @@ pub struct DeviceInfo<const N: usize> {
     /// Economy information.
     #[serde(skip_serializing_if = "Economy::is_empty")]
     #[serde(default = "Economy::empty")]
-    pub economy: Economy<N>,
+    pub economy: Economy<C, R>,
 }
 
-impl<const N: usize> DeviceInfo<N> {
+impl DeviceInfo<2, 2, 2> {
     /// Creates a [`DeviceInfo`].
     #[must_use]
-    pub fn empty() -> Self {
-        Self {
-            energy: Energy::empty(),
-            economy: Economy::empty(),
+    pub const fn empty() -> Self {
+        DeviceInfo::<2, 2, 2> {
+            energy: Energy::<2>::empty(),
+            economy: Economy::<2, 2>::empty(),
         }
     }
+}
 
+impl<const C: usize, const R: usize, const N: usize> DeviceInfo<C, R, N> {
     /// Adds [`Energy`] data.
     #[must_use]
-    pub fn add_energy(mut self, energy: Energy<N>) -> Self {
-        self.energy = energy;
-        self
+    #[inline]
+    pub fn add_energy<const N2: usize>(self, energy: Energy<N2>) -> DeviceInfo<C, R, N2> {
+        DeviceInfo::<C, R, N2> {
+            energy,
+            economy: self.economy,
+        }
     }
 
     /// Adds [`Economy`] data.
     #[must_use]
-    pub fn add_economy(mut self, economy: Economy<N>) -> Self {
-        self.economy = economy;
-        self
+    #[inline]
+    pub fn add_economy<const C2: usize, const R2: usize>(
+        self,
+        economy: Economy<C2, R2>,
+    ) -> DeviceInfo<C2, R2, N> {
+        DeviceInfo::<C2, R2, N> {
+            energy: self.energy,
+            economy,
+        }
     }
 }
 
@@ -61,7 +72,7 @@ pub struct DeviceData<const H: usize, const I: usize, const N: usize> {
 impl<const H: usize, const I: usize, const N: usize> DeviceData<H, I, N> {
     /// Creates a [`DeviceData`].
     #[must_use]
-    pub fn new(
+    pub const fn new(
         kind: DeviceKind,
         environment: DeviceEnvironment,
         main_route: &'static str,
