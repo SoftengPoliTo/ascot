@@ -3,7 +3,7 @@ name = "ascot-library-stack"
 version = "0.1.0"
 authors = ["Michele Valsesia <luni-4@hotmail.it>"]
 edition = "2021"
-description = "Ascot communication interface for stack-oriented devices"
+description = "Ascot communication interface for stack-oriented devices."
 license = "MIT"
 resolver = "2"
 
@@ -22,5 +22,5 @@ serde.default-features = false
 serde.features = ["derive"]
 
 serde_json.version = "1"
-serde.default-features = false
-serde.features = ["alloc"]
+serde_json.default-features = false
+serde_json.features = ["alloc"]

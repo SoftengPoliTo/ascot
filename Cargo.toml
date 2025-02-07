@@ -3,7 +3,7 @@ name = "ascot-library"
 version = "0.1.0"
 authors = ["Michele Valsesia <luni-4@hotmail.it>"]
 edition = "2021"
-description = "Ascot communication interface for general-purpose devices"
+description = "Ascot communication interface for general-purpose devices."
 license = "MIT"
 resolver = "2"
 
@@ -18,6 +18,7 @@ serde.version = "1.0"
 serde.default-features = false
 serde.features = ["derive"]
 
+[dev-dependencies]
 serde_json.version = "1"
 serde_json.default-features = false
 serde_json.features = ["alloc"]

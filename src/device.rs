@@ -103,6 +103,7 @@ pub struct DeviceData {
     pub environment: DeviceEnvironment,
     /// Device main route.
     #[serde(rename = "main route")]
+    #[serde(borrow)]
     pub main_route: alloc::borrow::Cow<'static, str>,
     /// All device route configurations.
     pub route_configs: RouteConfigs,
