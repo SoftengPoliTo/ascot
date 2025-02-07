@@ -157,14 +157,12 @@ impl ErrorResponse {
 
 #[cfg(test)]
 mod tests {
-    use crate::economy::Economy;
-    use crate::energy::{Energy, WaterUseEfficiency};
     use crate::{deserialize, serialize};
 
-    use super::{
-        ActionError, Deserialize, DeviceInfo, ErrorResponse, InfoResponse, OkResponse,
-        SerialResponse, Serialize, String,
-    };
+    use super::{Deserialize, OkResponse, SerialResponse, Serialize};
+
+    #[cfg(feature = "alloc")]
+    use super::{ActionError, DeviceInfo, ErrorResponse, InfoResponse, String};
 
     #[derive(Debug, PartialEq, Serialize, Deserialize)]
     struct Serial {
@@ -192,24 +190,25 @@ mod tests {
     #[cfg(feature = "alloc")]
     #[test]
     fn test_info_response() {
-        let energy =
-            Energy::init_with_water_use_efficiency(WaterUseEfficiency::init_with_gpp(42.0));
+        let energy = crate::energy::Energy::init_with_water_use_efficiency(
+            crate::energy::WaterUseEfficiency::init_with_gpp(42.0),
+        );
 
         assert_eq!(
             deserialize::<DeviceInfo>(serialize(InfoResponse::new(
                 DeviceInfo::empty().add_energy(energy)
             ))),
             DeviceInfo {
-                energy: Energy {
+                energy: crate::energy::Energy {
                     energy_efficiencies: None,
                     carbon_footprints: None,
-                    water_use_efficiency: Some(WaterUseEfficiency {
+                    water_use_efficiency: Some(crate::energy::WaterUseEfficiency {
                         gpp: Some(42.0),
                         penman_monteith_equation: None,
                         wer: None,
                     }),
                 },
-                economy: Economy::empty(),
+                economy: crate::economy::Economy::empty(),
             }
         );
     }

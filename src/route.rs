@@ -26,7 +26,7 @@ impl core::fmt::Display for RestKind {
 }
 
 #[cfg(feature = "alloc")]
-mod route {
+mod private_route {
     use crate::hazards::{Hazard, Hazards};
     use crate::input::{Input, Inputs, InputsData};
     use crate::response::ResponseKind;
@@ -276,7 +276,7 @@ mod route {
 }
 
 #[cfg(feature = "alloc")]
-pub use route::{Route, RouteConfig, RouteConfigs, RouteData, Routes};
+pub use private_route::{Route, RouteConfig, RouteConfigs, RouteData, Routes};
 
 #[cfg(feature = "alloc")]
 #[cfg(test)]
