@@ -1,0 +1,108 @@
+use ascot::energy::{CarbonFootprint, EnergyEfficiencies};
+use serde::{Deserialize, Serialize};
+
+use crate::collections::OutputCollection;
+
+/// A collection of [`EnergyEfficiency`]s.
+pub type EnergyEfficiencies<const N: usize> = OutputCollection<EnergyEfficiency<N>>;
+
+/// A collection of [`CarbonFootprints`]s.
+pub type CarbonFootprints<const N: usize> = OutputCollection<CarbonFootprint<N>>;
+
+/// Energy information of a device.
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+pub struct Energy<const N: usize> {
+    /// Energy efficiencies.
+    #[serde(rename = "energy-efficiencies")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub energy_efficiencies: Option<EnergyEfficiencies<N>>,
+    /// Carbon footprints.
+    #[serde(rename = "carbon-footprints")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub carbon_footprints: Option<CarbonFootprints<N>>,
+    /// Water-Use efficiency.
+    #[serde(rename = "water-use-efficiency")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub water_use_efficiency: Option<WaterUseEfficiency>,
+}
+
+impl<const N: usize> Energy<N> {
+    /// Creates an empty [`Energy`] instance.
+    #[must_use]
+    pub const fn empty() -> Self {
+        Self {
+            energy_efficiencies: None,
+            carbon_footprints: None,
+            water_use_efficiency: None,
+        }
+    }
+
+    /// Creates a new [`Energy`] instance initialized with
+    /// [`EnergyEfficiencies`] data.
+    #[must_use]
+    pub const fn init_with_energy_efficiencies(energy_efficiencies: EnergyEfficiencies<N>) -> Self {
+        Self {
+            energy_efficiencies: Some(energy_efficiencies),
+            carbon_footprints: None,
+            water_use_efficiency: None,
+        }
+    }
+
+    /// Creates a new [`Energy`] instance initialized with
+    /// [`CarbonFootprints`] data.
+    #[must_use]
+    pub const fn init_with_carbon_footprints(carbon_footprints: CarbonFootprints<N>) -> Self {
+        Self {
+            energy_efficiencies: None,
+            carbon_footprints: Some(carbon_footprints),
+            water_use_efficiency: None,
+        }
+    }
+
+    /// Creates a new [`Energy`] instance initialized with
+    /// [`WaterUseEfficiency`] data.
+    #[must_use]
+    pub const fn init_with_water_use_efficiency(
+        water_use_efficiency: WaterUseEfficiency<N>,
+    ) -> Self {
+        Self {
+            energy_efficiencies: None,
+            carbon_footprints: None,
+            water_use_efficiency: Some(water_use_efficiency),
+        }
+    }
+
+    /// Adds [`EnergyEfficiencies`] data.
+    #[must_use]
+    #[inline]
+    pub fn energy_efficiencies(mut self, energy_efficiencies: EnergyEfficiencies<N>) -> Self {
+        self.energy_efficiencies = Some(energy_efficiencies);
+        self
+    }
+
+    /// Adds [`CarbonFootprints`] data.
+    #[must_use]
+    #[inline]
+    pub fn carbon_footprints(mut self, carbon_footprints: CarbonFootprints<N>) -> Self {
+        self.carbon_footprints = Some(carbon_footprints);
+        self
+    }
+
+    /// Adds [`WaterUseEfficiency`] data.
+    #[must_use]
+    pub const fn water_use_efficiency(
+        mut self,
+        water_use_efficiency: WaterUseEfficiency<N>,
+    ) -> Self {
+        self.water_use_efficiency = Some(water_use_efficiency);
+        self
+    }
+
+    /// Checks whether [`Energy`] is **completely** empty.
+    #[must_use]
+    pub const fn is_empty(&self) -> bool {
+        self.energy_efficiencies.is_none()
+            && self.carbon_footprints.is_none()
+            && self.water_use_efficiency.is_none()
+    }
+}

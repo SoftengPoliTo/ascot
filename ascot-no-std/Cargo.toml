@@ -1,0 +1,28 @@
+[package]
+name = "ascot-no-std"
+version = "0.1.0"
+authors = ["Michele Valsesia <luni-4@hotmail.it>"]
+edition = "2021"
+description = "Ascot structures for no-std environments"
+license = "MIT"
+resolver = "2"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+ascot.version = "0.1.0"
+ascot.path = { ".." }
+ascot.default-features = false
+
+heapless.version = "0.8.0"
+heapless.default-features = false
+
+serde.version = "1.0"
+serde.default-features = false
+serde.features = ["derive"]
+
+serde_json.version = "1"
+serde.default-features = false
+serde.features = ["alloc"]
+
+
