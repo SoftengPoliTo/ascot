@@ -1,10 +1,8 @@
 use serde::{Deserialize, Serialize};
 
-use crate::collections::Collection;
-
 /// An [`Input`] structure.
+#[cfg(feature = "alloc")]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[cfg_attr(feature = "stack", derive(Copy))]
 pub enum InputStructure {
     /// A [`bool`] value.
     Bool {
@@ -76,7 +74,6 @@ pub enum InputStructure {
     ///
     /// This kind of input can contain an unknown or a precise sequence of
     /// characters expressed either as a fixed-size or an allocated string.
-    #[cfg(feature = "alloc")]
     CharsSequence {
         /// Initial characters sequence, which also represents the default
         /// value.
@@ -85,20 +82,15 @@ pub enum InputStructure {
     /// A byte stream input.
     ///
     /// This kind of input can be used to send files.
-    #[cfg(feature = "alloc")]
     ByteStream,
 }
 
 /// Input data.
+#[cfg(feature = "alloc")]
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "stack", derive(Copy))]
 pub struct InputData {
     /// Name.
-    #[cfg(feature = "alloc")]
     pub name: alloc::borrow::Cow<'static, str>,
-    /// Name.
-    #[cfg(feature = "stack")]
-    pub name: &'static str,
     /// Input structure.
     #[serde(rename = "structure")]
     pub structure: InputStructure,
@@ -107,32 +99,11 @@ pub struct InputData {
 impl InputData {
     fn new(input: Input) -> Self {
         Self {
-            #[cfg(feature = "alloc")]
             name: input.name.into(),
-            #[cfg(feature = "stack")]
-            name: input.name,
             structure: input.structure,
         }
     }
 }
-
-/// All supported inputs.
-#[derive(Debug, Clone)]
-#[cfg_attr(feature = "stack", derive(Copy))]
-pub struct Input {
-    // Name.
-    name: &'static str,
-    // Input structure.
-    structure: InputStructure,
-}
-
-/// A collection of [`InputData`]s.
-#[cfg(feature = "alloc")]
-pub type InputsData = crate::collections::OutputCollection<InputData>;
-
-/// A collection of [`InputData`]s.
-#[cfg(feature = "stack")]
-pub type InputsData = crate::collections::SerialCollection<InputData>;
 
 impl core::cmp::PartialEq for InputData {
     fn eq(&self, other: &Self) -> bool {
@@ -152,6 +123,20 @@ impl From<Input> for InputData {
     fn from(input: Input) -> Self {
         Self::new(input)
     }
+}
+
+/// A collection of [`InputData`]s.
+#[cfg(feature = "alloc")]
+pub type InputsData = crate::collections::OutputCollection<InputData>;
+
+/// All supported inputs.
+#[cfg(feature = "alloc")]
+#[derive(Debug, Clone)]
+pub struct Input {
+    // Name.
+    name: &'static str,
+    // Input structure.
+    structure: InputStructure,
 }
 
 impl core::cmp::PartialEq for Input {
@@ -293,7 +278,6 @@ impl Input {
     /// Creates a characters sequence with a default value.
     #[must_use]
     #[inline]
-    #[cfg(feature = "alloc")]
     pub fn characters_sequence(
         name: &'static str,
         default: impl Into<alloc::borrow::Cow<'static, str>>,
@@ -309,7 +293,6 @@ impl Input {
     /// Creates a byte stream input.
     #[must_use]
     #[inline]
-    #[cfg(feature = "alloc")]
     pub fn byte_stream(name: &'static str) -> Self {
         Self {
             name,
@@ -319,7 +302,8 @@ impl Input {
 }
 
 /// A collection of [`Input`]s.
-pub type Inputs = Collection<Input>;
+#[cfg(feature = "alloc")]
+pub type Inputs = crate::collections::Collection<Input>;
 
 #[cfg(feature = "alloc")]
 #[cfg(test)]
@@ -407,144 +391,6 @@ mod tests {
                 "bytes_stream"
             )))),
             InputData::from(Input::byte_stream("bytes_stream"))
-        );
-    }
-}
-
-#[cfg(feature = "stack")]
-#[cfg(test)]
-mod tests {
-    use serde_json::json;
-
-    use crate::serialize;
-
-    use super::{Input, InputData};
-
-    #[test]
-    fn test_values_inputs() {
-        assert_eq!(
-            serialize(InputData::from(Input::bool("bool", true))),
-            json!({
-                "name": "bool",
-                "structure": {
-                    "Bool": {
-                        "default": true
-                    }
-                }
-            })
-        );
-
-        assert_eq!(
-            serialize(InputData::from(Input::u8("u8", 0))),
-            json!({
-                "name": "u8",
-                "structure": {
-                    "U8": {
-                        "default": 0
-                    }
-                }
-            })
-        );
-
-        assert_eq!(
-            serialize(InputData::from(Input::u16("u16", 0))),
-            json!({
-                "name": "u16",
-                "structure": {
-                    "U16": {
-                        "default": 0
-                    }
-                }
-            })
-        );
-
-        assert_eq!(
-            serialize(InputData::from(Input::u32("u32", 0))),
-            json!({
-                "name": "u32",
-                "structure": {
-                    "U32": {
-                        "default": 0
-                    }
-                }
-            })
-        );
-
-        assert_eq!(
-            serialize(InputData::from(Input::u64("u64", 0))),
-            json!({
-                "name": "u64",
-                "structure": {
-                    "U64": {
-                        "default": 0
-                    }
-                }
-            })
-        );
-
-        assert_eq!(
-            serialize(InputData::from(Input::f32("f32", 0.))),
-            json!({
-                "name": "f32",
-                "structure": {
-                    "F32": {
-                        "default": 0.
-                    }
-                }
-            })
-        );
-
-        assert_eq!(
-            serialize(InputData::from(Input::f64("f64", 0.))),
-            json!({
-                "name": "f64",
-                "structure": {
-                    "F64": {
-                        "default": 0.
-                    }
-                }
-            })
-        );
-    }
-
-    #[test]
-    fn test_range_inputs() {
-        assert_eq!(
-            serialize(InputData::from(Input::rangeu64_with_default(
-                "rangeu64",
-                (0, 20, 1),
-                5
-            ))),
-            json!({
-                "name": "rangeu64",
-                "structure": {
-                    "RangeU64": {
-                        "min": 0,
-                        "max": 20,
-                        "step": 1,
-                        "default": 5,
-                    }
-                }
-            })
-        );
-
-        assert_eq!(
-            serialize(InputData::from(Input::rangef64_with_default(
-                "rangef64",
-                (0., 20., 0.1),
-                5.
-            ))),
-            json!({
-                "name": "rangef64",
-                "structure": {
-                    "RangeF64": {
-                        "min": 0.,
-                        "max": 20.,
-                        "step": 0.1,
-                        "default": 5.,
-                    }
-                }
-            })
         );
     }
 }

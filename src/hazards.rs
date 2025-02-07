@@ -288,6 +288,7 @@ impl Hazard {
 }
 
 /// A collection of [`Hazard`]s.
+#[cfg(feature = "alloc")]
 pub type Hazards = OutputCollection<Hazard>;
 
 /// All [`Hazard`] data.

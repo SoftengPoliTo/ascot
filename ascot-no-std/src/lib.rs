@@ -50,7 +50,7 @@ pub mod input;
 pub mod response;
 /// Definition of device routes.
 pub mod route;
-/// Fixed-capacity stack structures and collections.
+/// All fixed-capacity structures and collections.
 pub mod utils;
 
 #[cfg(test)]

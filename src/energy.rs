@@ -111,7 +111,8 @@ impl EnergyEfficiency {
 }
 
 /// A collection of [`EnergyEfficiency`]s.
-pub type EnergyEfficiencies = OutputCollection<EnergyEfficiency>;
+#[cfg(feature = "alloc")]
+pub type EnergyEfficiencies = crate::collections::OutputCollection<EnergyEfficiency>;
 
 /// Carbon footprint.
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, Serialize, Deserialize)]
@@ -168,7 +169,8 @@ impl CarbonFootprint {
 }
 
 /// A collection of [`CarbonFootprints`]s.
-pub type CarbonFootprints = OutputCollection<CarbonFootprint>;
+#[cfg(feature = "alloc")]
+pub type CarbonFootprints = crate::collections::OutputCollection<CarbonFootprint>;
 
 /// Water-Use efficiency data.
 ///
@@ -250,6 +252,7 @@ impl WaterUseEfficiency {
 }
 
 /// Energy information of a device.
+#[cfg(feature = "alloc")]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct Energy {
     /// Energy efficiencies.

@@ -6,9 +6,6 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use crate::actions::ActionError;
 use crate::device::DeviceInfo;
 
-#[cfg(feature = "stack")]
-use crate::strings::ShortString;
-
 /// Action response kinds.
 #[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
 pub enum ResponseKind {
@@ -85,67 +82,43 @@ impl InfoResponse {
 /// the execution of an action.
 ///
 /// It describes the kind of error, the cause, and optional information.
+#[cfg(feature = "alloc")]
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct ErrorResponse {
     /// Action error type.
     pub error: ActionError,
     /// Error description.
-    #[cfg(feature = "alloc")]
     pub description: String,
-    /// Error description.
-    #[cfg(feature = "stack")]
-    pub description: ShortString,
     /// Information about an error.
-    #[cfg(feature = "alloc")]
     pub info: Option<String>,
-    /// Information about an error.
-    #[cfg(feature = "stack")]
-    pub info: Option<ShortString>,
 }
 
 impl ErrorResponse {
     /// Creates an [`ErrorResponse`] with a specific [`ActionError`] and
     /// a description.
-    ///
-    /// If an error occurs, an empty description is returned.
     #[must_use]
     #[inline]
     pub fn with_description(error: ActionError, description: &str) -> Self {
         Self {
             error,
-            #[cfg(feature = "alloc")]
             description: String::from(description),
-            #[cfg(feature = "stack")]
-            description: ShortString::infallible(description),
             info: None,
         }
     }
 
     /// Creates an [`ErrorResponse`] with a specific [`ActionError`], an
     /// error description, and additional information about the error.
-    ///
-    /// If this method fails for some internal reasons, both an empty
-    /// description and information are returned.
     #[must_use]
     #[inline]
     pub fn with_description_error(error: ActionError, description: &str, info: &str) -> Self {
         Self {
             error,
-            #[cfg(feature = "alloc")]
             description: String::from(description),
-            #[cfg(feature = "stack")]
-            description: ShortString::infallible(description),
-            #[cfg(feature = "alloc")]
             info: Some(String::from(info)),
-            #[cfg(feature = "stack")]
-            info: Some(ShortString::infallible(info)),
         }
     }
 
     /// Creates an [`ErrorResponse`] for invalid data with a description.
-    ///
-    /// If this method fails for some internal reasons, an empty description
-    /// is returned.
     #[must_use]
     #[inline]
     pub fn invalid_data(description: &str) -> Self {
@@ -154,9 +127,6 @@ impl ErrorResponse {
 
     /// Creates an [`ErrorResponse`] for invalid data with a description and
     /// additional information about the error.
-    ///
-    /// If this method fails for some internal reasons, empty description and
-    /// information are returned.
     #[must_use]
     #[inline]
     pub fn invalid_data_with_error(description: &str, info: &str) -> Self {
@@ -164,9 +134,6 @@ impl ErrorResponse {
     }
 
     /// Creates an [`ErrorResponse`] for an internal error with a description.
-    ///
-    /// If this method fails for some internal reasons, an empty description
-    /// is returned.
     #[must_use]
     #[inline]
     pub fn internal(description: &str) -> Self {
@@ -175,9 +142,6 @@ impl ErrorResponse {
 
     /// Creates an [`ErrorResponse`] for an internal error with a description
     /// and additional information about the error.
-    ///
-    /// If this method fails for some internal reasons, empty description and
-    /// information are returned.
     #[must_use]
     #[inline]
     pub fn internal_with_error(description: &str, info: &str) -> Self {
@@ -193,7 +157,7 @@ mod tests {
 
     use super::{
         ActionError, Deserialize, DeviceInfo, ErrorResponse, InfoResponse, OkResponse,
-        SerialResponse, Serialize,
+        SerialResponse, Serialize, String,
     };
 
     #[derive(Debug, PartialEq, Serialize, Deserialize)]
@@ -243,6 +207,7 @@ mod tests {
         );
     }
 
+    #[cfg(feature = "alloc")]
     #[test]
     fn test_error_response() {
         let error = ErrorResponse::with_description(
@@ -254,10 +219,7 @@ mod tests {
             deserialize::<ErrorResponse>(serialize(error)),
             ErrorResponse {
                 error: ActionError::InvalidData,
-                #[cfg(feature = "alloc")]
-                description: super::String::from("Invalid data error description"),
-                #[cfg(feature = "stack")]
-                description: super::ShortString::infallible("Invalid data error description"),
+                description: String::from("Invalid data error description"),
                 info: None,
             }
         );

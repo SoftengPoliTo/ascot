@@ -25,11 +25,6 @@
 #![deny(missing_docs)]
 #![no_std]
 
-#[cfg(not(any(feature = "alloc", feature = "stack")))]
-compile_error! {
-    "ascot-library requires that either `alloc` (default) or `stack` feature is enabled"
-}
-
 #[cfg(feature = "alloc")]
 extern crate alloc;
 
@@ -41,9 +36,6 @@ pub mod device;
 pub mod economy;
 /// Information about the energy device aspects.
 pub mod energy;
-/// Error handling.
-#[cfg(feature = "stack")]
-pub mod error;
 /// Hazards descriptions and methods.
 pub mod hazards;
 /// Route input parameters.
@@ -52,19 +44,9 @@ pub mod input;
 pub mod response;
 /// Definition of device routes.
 pub mod route;
-
-mod utils;
-
-#[cfg(feature = "stack")]
-pub use error::{Error, ErrorKind};
-
+/// All structures and collections.
 #[cfg(feature = "alloc")]
-pub use utils::heap as collections;
-#[cfg(feature = "stack")]
-pub use utils::stack as collections;
-
-#[cfg(feature = "stack")]
-pub use utils::strings;
+pub mod utils;
 
 #[cfg(test)]
 pub(crate) fn serialize<T: serde::Serialize>(value: T) -> serde_json::Value {

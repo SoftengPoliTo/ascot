@@ -31,21 +31,13 @@ impl core::fmt::Display for RestKind {
 }
 
 /// Route data.
-#[derive(Debug, Clone, Serialize)]
-#[cfg_attr(feature = "alloc", derive(Deserialize))]
+#[cfg(feature = "alloc")]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RouteData {
     /// Name.
-    #[cfg(feature = "alloc")]
     pub name: alloc::borrow::Cow<'static, str>,
-    /// Name.
-    #[cfg(feature = "stack")]
-    pub name: &'static str,
     /// Description.
-    #[cfg(feature = "alloc")]
     pub description: Option<alloc::borrow::Cow<'static, str>>,
-    /// Description.
-    #[cfg(feature = "stack")]
-    pub description: Option<&'static str>,
     /// Hazards data.
     #[serde(skip_serializing_if = "Hazards::is_empty")]
     #[serde(default = "Hazards::empty")]
@@ -57,28 +49,16 @@ pub struct RouteData {
 }
 
 impl PartialEq for RouteData {
-    #[cfg(feature = "alloc")]
     fn eq(&self, other: &Self) -> bool {
         self.name.eq(&other.name)
-    }
-
-    #[cfg(feature = "stack")]
-    fn eq(&self, other: &Self) -> bool {
-        self.name.eq(other.name)
     }
 }
 
 impl RouteData {
-    pub(super) fn new(route: Route) -> Self {
+    fn new(route: Route) -> Self {
         Self {
-            #[cfg(feature = "alloc")]
             name: route.route.into(),
-            #[cfg(feature = "stack")]
-            name: route.route,
-            #[cfg(feature = "alloc")]
             description: route.description.map(core::convert::Into::into),
-            #[cfg(feature = "stack")]
-            description: route.description,
             hazards: route.hazards,
             inputs: InputsData::from(route.inputs),
         }
@@ -86,8 +66,8 @@ impl RouteData {
 }
 
 /// A server route configuration.
-#[derive(Debug, Clone, Serialize)]
-#[cfg_attr(feature = "alloc", derive(Deserialize))]
+#[cfg(feature = "alloc")]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RouteConfig {
     /// Route.
     #[serde(flatten)]
@@ -99,14 +79,6 @@ pub struct RouteConfig {
     #[serde(rename = "response kind")]
     pub response_kind: ResponseKind,
 }
-
-/// A collection of [`RouteConfig`]s.
-#[cfg(feature = "alloc")]
-pub type RouteConfigs = crate::collections::OutputCollection<RouteConfig>;
-
-/// A collection of [`RouteConfig`]s.
-#[cfg(feature = "stack")]
-pub type RouteConfigs = crate::collections::SerialCollection<RouteConfig>;
 
 impl PartialEq for RouteConfig {
     fn eq(&self, other: &Self) -> bool {
@@ -133,10 +105,15 @@ impl RouteConfig {
     }
 }
 
+/// A collection of [`RouteConfig`]s.
+#[cfg(feature = "alloc")]
+pub type RouteConfigs = crate::collections::OutputCollection<RouteConfig>;
+
 /// A server route.
 ///
 /// It represents a specific `REST` API which, when invoked, runs a task on
 /// a remote device.
+#[cfg(feature = "alloc")]
 #[derive(Debug)]
 pub struct Route {
     // Route.
@@ -296,7 +273,8 @@ impl Route {
 }
 
 /// A collection of [`Route`]s.
-pub type Routes = Collection<Route>;
+#[cfg(feature = "alloc")]
+pub type Routes = crate::collections::Collection<Route>;
 
 #[cfg(feature = "alloc")]
 #[cfg(test)]
@@ -464,197 +442,6 @@ mod tests {
                     ])
                     .serialize_data()
             )),
-            expected
-        );
-    }
-}
-
-#[cfg(feature = "stack")]
-#[cfg(test)]
-mod tests {
-    use serde_json::json;
-
-    use crate::serialize;
-
-    use super::{Hazard, Hazards, Input, Route};
-
-    #[test]
-    fn test_all_routes() {
-        assert_eq!(
-            serialize(
-                Route::get("/route")
-                    .description("A GET route")
-                    .serialize_data()
-            ),
-            json!({
-                "name": "/route",
-                "description": "A GET route",
-                "REST kind": "Get",
-                "response kind": "Ok"
-            })
-        );
-
-        assert_eq!(
-            serialize(
-                Route::put("/route")
-                    .description("A PUT route")
-                    .serialize_data()
-            ),
-            json!({
-                "name": "/route",
-                "description": "A PUT route",
-                "REST kind": "Put",
-                "response kind": "Ok"
-            })
-        );
-
-        assert_eq!(
-            serialize(
-                Route::post("/route")
-                    .description("A POST route")
-                    .serialize_data()
-            ),
-            json!({
-                "name": "/route",
-                "description": "A POST route",
-                "REST kind": "Post",
-                "response kind": "Ok"
-            })
-        );
-
-        assert_eq!(
-            serialize(
-                Route::delete("/route")
-                    .description("A DELETE route")
-                    .serialize_data()
-            ),
-            json!({
-                "name": "/route",
-                "description": "A DELETE route",
-                "REST kind": "Delete",
-                "response kind": "Ok"
-            })
-        );
-    }
-
-    #[test]
-    fn test_all_hazards() {
-        assert_eq!(
-            serialize(
-                Route::get("/route")
-                    .description("A GET route")
-                    .with_hazard(Hazard::FireHazard)
-                    .serialize_data()
-            ),
-            json!({
-                "name": "/route",
-                "description": "A GET route",
-                "REST kind": "Get",
-                "response kind": "Ok",
-                "hazards": [
-                    "FireHazard"
-                ],
-            })
-        );
-
-        assert_eq!(
-            serialize(
-                Route::get("/route")
-                    .description("A GET route")
-                    .with_hazards(
-                        Hazards::empty()
-                            .insert(Hazard::FireHazard)
-                            .insert(Hazard::AirPoisoning)
-                    )
-                    .serialize_data()
-            ),
-            json!({
-                "name": "/route",
-                "description": "A GET route",
-                "REST kind": "Get",
-                "response kind": "Ok",
-                "hazards": [
-                    "FireHazard",
-                    "AirPoisoning",
-                ],
-            })
-        );
-
-        assert_eq!(
-            serialize(
-                Route::get("/route")
-                    .description("A GET route")
-                    .with_slice_hazards(&[Hazard::FireHazard, Hazard::AirPoisoning])
-                    .serialize_data()
-            ),
-            json!({
-                "name": "/route",
-                "description": "A GET route",
-                "REST kind": "Get",
-                "response kind": "Ok",
-                "hazards": [
-                    "FireHazard",
-                    "AirPoisoning",
-                ],
-            })
-        );
-    }
-
-    #[test]
-    fn test_all_inputs() {
-        let expected = json!({
-            "name": "/route",
-            "description": "A GET route",
-            "REST kind": "Get",
-            "response kind": "Ok",
-            "inputs": [
-                {
-                    "name": "rangeu64",
-                    "structure": {
-                        "RangeU64": {
-                            "min": 0,
-                            "max": 20,
-                            "step": 1,
-                            "default": 5
-                        }
-                    }
-                },
-                {
-                    "name": "rangef64",
-                    "structure": {
-                        "RangeF64": {
-                            "min": 0.0,
-                            "max": 20.0,
-                            "step": 0.1,
-                            "default": 0.0
-                        }
-                    }
-                }
-            ],
-            "REST kind": "Get"
-        });
-
-        assert_eq!(
-            serialize(
-                Route::get("/route")
-                    .description("A GET route")
-                    .with_input(Input::rangeu64_with_default("rangeu64", (0, 20, 1), 5))
-                    .with_input(Input::rangef64("rangef64", (0., 20., 0.1)))
-                    .serialize_data()
-            ),
-            expected
-        );
-
-        assert_eq!(
-            serialize(
-                Route::get("/route")
-                    .description("A GET route")
-                    .with_inputs([
-                        Input::rangeu64_with_default("rangeu64", (0, 20, 1), 5),
-                        Input::rangef64("rangef64", (0., 20., 0.1))
-                    ])
-                    .serialize_data()
-            ),
             expected
         );
     }

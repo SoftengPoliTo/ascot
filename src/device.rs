@@ -1,7 +1,10 @@
 use serde::{Deserialize, Serialize};
 
+#[cfg(feature = "alloc")]
 use crate::economy::Economy;
+#[cfg(feature = "alloc")]
 use crate::energy::Energy;
+#[cfg(feature = "alloc")]
 use crate::route::RouteConfigs;
 
 /// A device kind.
@@ -35,6 +38,7 @@ impl core::fmt::Display for DeviceKind {
 }
 
 /// Device information.
+#[cfg(feature = "alloc")]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct DeviceInfo {
     /// Energy information.
@@ -89,21 +93,16 @@ pub enum DeviceEnvironment {
 }
 
 /// Device data.
-#[derive(Debug, Serialize)]
-#[cfg_attr(feature = "alloc", derive(Deserialize))]
+#[cfg(feature = "alloc")]
+#[derive(Debug, Serialize. Deserialize)]
 pub struct DeviceData {
     /// Device kind.
     pub kind: DeviceKind,
     /// Device environment.
     pub environment: DeviceEnvironment,
     /// Device main route.
-    #[cfg(feature = "alloc")]
     #[serde(rename = "main route")]
     pub main_route: alloc::borrow::Cow<'static, str>,
-    /// Device main route.
-    #[cfg(feature = "stack")]
-    #[serde(rename = "main route")]
-    pub main_route: &'static str,
     /// All device route configurations.
     pub route_configs: RouteConfigs,
 }
@@ -114,17 +113,13 @@ impl DeviceData {
     pub fn new(
         kind: DeviceKind,
         environment: DeviceEnvironment,
-        #[cfg(feature = "alloc")] main_route: impl Into<alloc::borrow::Cow<'static, str>>,
-        #[cfg(feature = "stack")] main_route: &'static str,
+        main_route: impl Into<alloc::borrow::Cow<'static, str>>,
         route_configs: RouteConfigs,
     ) -> Self {
         Self {
             kind,
             environment,
-            #[cfg(feature = "alloc")]
             main_route: main_route.into(),
-            #[cfg(feature = "stack")]
-            main_route,
             route_configs,
         }
     }
