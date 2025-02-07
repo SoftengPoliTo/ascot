@@ -11,7 +11,7 @@ use crate::utils::collections::{Collection, SerialCollection};
 
 /// Route data.
 #[derive(Debug, Clone, Serialize)]
-pub struct RouteData<const N: usize> {
+pub struct RouteData<const H: usize, const I: usize> {
     /// Name.
     pub name: &'static str,
     /// Description.
@@ -19,21 +19,21 @@ pub struct RouteData<const N: usize> {
     /// Hazards data.
     #[serde(skip_serializing_if = "Hazards::is_empty")]
     #[serde(default = "Hazards::empty")]
-    pub hazards: Hazards<N>,
+    pub hazards: Hazards<H>,
     /// Inputs associated with a route..
     #[serde(skip_serializing_if = "InputsData::is_empty")]
     #[serde(default = "InputsData::empty")]
-    pub inputs: InputsData<N>,
+    pub inputs: InputsData<I>,
 }
 
-impl<const N: usize> PartialEq for RouteData<N> {
+impl<const H: usize, const I: usize> PartialEq for RouteData<H, I> {
     fn eq(&self, other: &Self) -> bool {
         self.name.eq(other.name)
     }
 }
 
-impl<const N: usize> RouteData<N> {
-    fn new(route: Route<N>) -> Self {
+impl<const H: usize, const I: usize> RouteData<H, I> {
+    fn new(route: Route<H, I>) -> Self {
         Self {
             name: route.route,
             description: route.description,
@@ -45,10 +45,10 @@ impl<const N: usize> RouteData<N> {
 
 /// A server route configuration.
 #[derive(Debug, Clone, Serialize)]
-pub struct RouteConfig<const N: usize> {
+pub struct RouteConfig<const H: usize, const I: usize> {
     /// Route.
     #[serde(flatten)]
-    pub data: RouteData<N>,
+    pub data: RouteData<H, I>,
     /// **_REST_** kind..
     #[serde(rename = "REST kind")]
     pub rest_kind: RestKind,
@@ -57,26 +57,23 @@ pub struct RouteConfig<const N: usize> {
     pub response_kind: ResponseKind,
 }
 
-/// A collection of [`RouteConfig`]s.
-pub type RouteConfigs<const N: usize> = SerialCollection<RouteConfig<N>, N>;
-
-impl<const N: usize> PartialEq for RouteConfig<N> {
+impl<const H: usize, const I: usize> PartialEq for RouteConfig<H, I> {
     fn eq(&self, other: &Self) -> bool {
         self.data.eq(&other.data) && self.rest_kind == other.rest_kind
     }
 }
 
-impl<const N: usize> Eq for RouteConfig<N> {}
+impl<const H: usize, const I: usize> Eq for RouteConfig<H, I> {}
 
-impl<const N: usize> Hash for RouteConfig<N> {
-    fn hash<H: Hasher>(&self, state: &mut H) {
+impl<const H: usize, const I: usize> Hash for RouteConfig<H, I> {
+    fn hash<Ha: Hasher>(&self, state: &mut Ha) {
         self.data.name.hash(state);
         self.rest_kind.hash(state);
     }
 }
 
-impl<const N: usize> RouteConfig<N> {
-    fn new(route: Route<N>) -> Self {
+impl<const H: usize, const I: usize> RouteConfig<H, I> {
+    fn new(route: Route<H, I>) -> Self {
         Self {
             rest_kind: route.rest_kind,
             response_kind: ResponseKind::default(),
@@ -85,40 +82,44 @@ impl<const N: usize> RouteConfig<N> {
     }
 }
 
+/// A collection of [`RouteConfig`]s.
+pub type RouteConfigs<const H: usize, const I: usize, const N: usize> =
+    SerialCollection<RouteConfig<H, I>, N>;
+
 /// A server route.
 ///
 /// It represents a specific `REST` API which, when invoked, runs a task on
 /// a remote device.
 #[derive(Debug)]
-pub struct Route<const N: usize> {
+pub struct Route<const H: usize, const I: usize> {
     // Route.
     route: &'static str,
     // REST kind.
     rest_kind: RestKind,
     // Description.
     description: Option<&'static str>,
-    // Inputs.
-    inputs: Inputs<N>,
     // Hazards.
-    hazards: Hazards<N>,
+    hazards: Hazards<H>,
+    // Inputs.
+    inputs: Inputs<I>,
 }
 
-impl<const N: usize> PartialEq for Route<N> {
+impl<const H: usize, const I: usize> PartialEq for Route<H, I> {
     fn eq(&self, other: &Self) -> bool {
         self.route == other.route && self.rest_kind == other.rest_kind
     }
 }
 
-impl<const N: usize> Eq for Route<N> {}
+impl<const H: usize, const I: usize> Eq for Route<H, I> {}
 
-impl<const N: usize> Hash for Route<N> {
-    fn hash<H: Hasher>(&self, state: &mut H) {
+impl<const H: usize, const I: usize> Hash for Route<H, I> {
+    fn hash<Ha: Hasher>(&self, state: &mut Ha) {
         self.route.hash(state);
         self.rest_kind.hash(state);
     }
 }
 
-impl Route<2> {
+impl Route<2, 2> {
     /// Creates a new [`Route`] through a REST `GET` API.
     #[must_use]
     #[inline]
@@ -148,7 +149,7 @@ impl Route<2> {
     }
 
     fn init(rest_kind: RestKind, route: &'static str) -> Self {
-        Route::<2> {
+        Route::<2, 2> {
             route,
             rest_kind,
             description: None,
@@ -158,7 +159,7 @@ impl Route<2> {
     }
 }
 
-impl<const N: usize> Route<N> {
+impl<const H: usize, const I: usize> Route<H, I> {
     /// Sets the route description.
     #[must_use]
     pub const fn description(mut self, description: &'static str) -> Self {
@@ -173,20 +174,30 @@ impl<const N: usize> Route<N> {
         self
     }
 
-    /// Adds [`Input`] array to a [`Route`].
-    #[must_use]
-    #[inline]
-    pub fn with_inputs(mut self, inputs: Inputs<N>) -> Self {
-        self.inputs = inputs;
-        self
-    }
-
     /// Adds [`Hazards`] to a [`Route`].
     #[must_use]
     #[inline]
-    pub fn with_hazards(mut self, hazards: Hazards<N>) -> Self {
-        self.hazards = hazards;
-        self
+    pub fn with_hazards<const H2: usize>(self, hazards: Hazards<H2>) -> Route<H2, I> {
+        Route::<H2, I> {
+            route: self.route,
+            rest_kind: self.rest_kind,
+            description: self.description,
+            hazards: hazards,
+            inputs: self.inputs,
+        }
+    }
+
+    /// Adds [`Input`] array to a [`Route`].
+    #[must_use]
+    #[inline]
+    pub fn with_inputs<const I2: usize>(self, inputs: Inputs<I2>) -> Route<H, I2> {
+        Route::<H, I2> {
+            route: self.route,
+            rest_kind: self.rest_kind,
+            description: self.description,
+            hazards: self.hazards,
+            inputs: inputs,
+        }
     }
 
     /// Returns route.
@@ -203,13 +214,13 @@ impl<const N: usize> Route<N> {
 
     /// Returns [`Hazards`].
     #[must_use]
-    pub const fn hazards(&self) -> &Hazards<N> {
+    pub const fn hazards(&self) -> &Hazards<H> {
         &self.hazards
     }
 
     /// Returns [`Inputs`].
     #[must_use]
-    pub const fn inputs(&self) -> &Inputs<N> {
+    pub const fn inputs(&self) -> &Inputs<I> {
         &self.inputs
     }
 
@@ -218,13 +229,16 @@ impl<const N: usize> Route<N> {
     /// It consumes the data.
     #[must_use]
     #[inline]
-    pub fn serialize_data(self) -> RouteConfig<N> {
+    pub fn serialize_data(self) -> RouteConfig<H, I> {
         RouteConfig::new(self)
     }
 }
 
 /// A collection of [`Route`]s.
-pub type Routes<const N: usize> = Collection<Route<N>, N>;
+///
+/// **For alignment reasons, it accepts only a power of two
+/// as number of elements.**
+pub type Routes<const I: usize, const H: usize, const N: usize> = Collection<Route<I, H>, N>;
 
 #[cfg(test)]
 mod tests {
@@ -302,9 +316,10 @@ mod tests {
                 Route::get("/route")
                     .description("A GET route")
                     .with_hazards(
-                        Hazards::empty()
+                        Hazards::<4>::empty()
                             .insert(Hazard::FireHazard)
                             .insert(Hazard::AirPoisoning)
+                            .insert(Hazard::Explosion)
                     )
                     .serialize_data()
             ),
@@ -316,6 +331,7 @@ mod tests {
                 "hazards": [
                     "FireHazard",
                     "AirPoisoning",
+                    "Explosion",
                 ],
             })
         );
@@ -350,6 +366,14 @@ mod tests {
                             "default": 0.0
                         }
                     }
+                },
+                {
+                    "name": "bool",
+                    "structure": {
+                        "Bool": {
+                            "default": true,
+                        }
+                    }
                 }
             ],
             "REST kind": "Get"
@@ -360,9 +384,79 @@ mod tests {
                 Route::get("/route")
                     .description("A GET route")
                     .with_inputs(
-                        Inputs::empty()
+                        Inputs::<4>::empty()
                             .insert(Input::rangeu64_with_default("rangeu64", (0, 20, 1), 5))
                             .insert(Input::rangef64("rangef64", (0., 20., 0.1)))
+                            .insert(Input::bool("bool", true))
+                    )
+                    .serialize_data()
+            ),
+            expected
+        );
+    }
+
+    #[test]
+    fn test_complete_route() {
+        let expected = json!({
+            "name": "/route",
+            "description": "A GET route",
+            "REST kind": "Get",
+            "response kind": "Ok",
+            "hazards": [
+                    "FireHazard",
+                    "AirPoisoning",
+                    "Explosion",
+            ],
+            "inputs": [
+                {
+                    "name": "rangeu64",
+                    "structure": {
+                        "RangeU64": {
+                            "min": 0,
+                            "max": 20,
+                            "step": 1,
+                            "default": 5
+                        }
+                    }
+                },
+                {
+                    "name": "rangef64",
+                    "structure": {
+                        "RangeF64": {
+                            "min": 0.0,
+                            "max": 20.0,
+                            "step": 0.1,
+                            "default": 0.0
+                        }
+                    }
+                },
+                {
+                    "name": "bool",
+                    "structure": {
+                        "Bool": {
+                            "default": true,
+                        }
+                    }
+                }
+            ],
+            "REST kind": "Get"
+        });
+
+        assert_eq!(
+            serialize(
+                Route::get("/route")
+                    .description("A GET route")
+                    .with_hazards(
+                        Hazards::<4>::empty()
+                            .insert(Hazard::FireHazard)
+                            .insert(Hazard::AirPoisoning)
+                            .insert(Hazard::Explosion)
+                    )
+                    .with_inputs(
+                        Inputs::<4>::empty()
+                            .insert(Input::rangeu64_with_default("rangeu64", (0, 20, 1), 5))
+                            .insert(Input::rangef64("rangef64", (0., 20., 0.1)))
+                            .insert(Input::bool("bool", true))
                     )
                     .serialize_data()
             ),

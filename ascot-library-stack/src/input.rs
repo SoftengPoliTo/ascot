@@ -261,6 +261,9 @@ impl Input {
 }
 
 /// A collection of [`Input`]s.
+///
+/// **For alignment reasons, it accepts only a power of two
+/// as number of elements.**
 pub type Inputs<const N: usize> = Collection<Input, N>;
 
 #[cfg(test)]

@@ -46,7 +46,7 @@ impl<const N: usize> DeviceInfo<N> {
 
 /// Device data.
 #[derive(Debug, Serialize)]
-pub struct DeviceData<const N: usize> {
+pub struct DeviceData<const H: usize, const I: usize, const N: usize> {
     /// Device kind.
     pub kind: DeviceKind,
     /// Device environment.
@@ -55,17 +55,17 @@ pub struct DeviceData<const N: usize> {
     #[serde(rename = "main route")]
     pub main_route: &'static str,
     /// All device route configurations.
-    pub route_configs: RouteConfigs<N>,
+    pub route_configs: RouteConfigs<H, I, N>,
 }
 
-impl<const N: usize> DeviceData<N> {
+impl<const H: usize, const I: usize, const N: usize> DeviceData<H, I, N> {
     /// Creates a [`DeviceData`].
     #[must_use]
     pub fn new(
         kind: DeviceKind,
         environment: DeviceEnvironment,
         main_route: &'static str,
-        route_configs: RouteConfigs<N>,
+        route_configs: RouteConfigs<H, I, N>,
     ) -> Self {
         Self {
             kind,
