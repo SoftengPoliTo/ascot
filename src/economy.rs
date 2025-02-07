@@ -68,7 +68,7 @@ impl Cost {
 
 /// A collection of [`Cost`]s.
 #[cfg(feature = "alloc")]
-pub type Costs = crate::collections::OutputCollection<Cost>;
+pub type Costs = crate::utils::collections::OutputCollection<Cost>;
 
 /// Return on investments (ROI).
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, Serialize, Deserialize)]
@@ -116,7 +116,7 @@ impl Roi {
 
 /// A collection of [`Roi`]s.
 #[cfg(feature = "alloc")]
-pub type Rois = crate::collections::OutputCollection<Roi>;
+pub type Rois = crate::utils::collections::OutputCollection<Roi>;
 
 /// Economy data for a device.
 #[cfg(feature = "alloc")]
@@ -130,6 +130,7 @@ pub struct Economy {
     pub roi: Option<Rois>,
 }
 
+#[cfg(feature = "alloc")]
 impl Economy {
     /// Creates an empty [`Economy`] instance.
     #[must_use]

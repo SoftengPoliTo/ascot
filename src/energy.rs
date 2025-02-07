@@ -1,7 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-use crate::collections::OutputCollection;
-
 /// Energy efficiency class.
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, Serialize, Deserialize)]
 pub enum EnergyClass {
@@ -112,7 +110,7 @@ impl EnergyEfficiency {
 
 /// A collection of [`EnergyEfficiency`]s.
 #[cfg(feature = "alloc")]
-pub type EnergyEfficiencies = crate::collections::OutputCollection<EnergyEfficiency>;
+pub type EnergyEfficiencies = crate::utils::collections::OutputCollection<EnergyEfficiency>;
 
 /// Carbon footprint.
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, Serialize, Deserialize)]
@@ -170,7 +168,7 @@ impl CarbonFootprint {
 
 /// A collection of [`CarbonFootprints`]s.
 #[cfg(feature = "alloc")]
-pub type CarbonFootprints = crate::collections::OutputCollection<CarbonFootprint>;
+pub type CarbonFootprints = crate::utils::collections::OutputCollection<CarbonFootprint>;
 
 /// Water-Use efficiency data.
 ///
@@ -269,6 +267,7 @@ pub struct Energy {
     pub water_use_efficiency: Option<WaterUseEfficiency>,
 }
 
+#[cfg(feature = "alloc")]
 impl Energy {
     /// Creates an empty [`Energy`] instance.
     #[must_use]

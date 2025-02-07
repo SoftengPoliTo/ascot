@@ -1,9 +1,12 @@
 use serde::{Deserialize, Serialize};
 
-use crate::collections::Collection;
-use crate::hazards::{Hazard, Hazards};
-use crate::input::{Input, Inputs, InputsData};
+use crate::hazards::Hazard;
 use crate::response::ResponseKind;
+
+#[cfg(feature = "alloc")]
+use crate::hazards::Hazards;
+#[cfg(feature = "alloc")]
+use crate::input::{Input, Inputs, InputsData};
 
 /// `REST` requests kind.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -107,7 +110,7 @@ impl RouteConfig {
 
 /// A collection of [`RouteConfig`]s.
 #[cfg(feature = "alloc")]
-pub type RouteConfigs = crate::collections::OutputCollection<RouteConfig>;
+pub type RouteConfigs = crate::utils::collections::OutputCollection<RouteConfig>;
 
 /// A server route.
 ///
@@ -274,7 +277,7 @@ impl Route {
 
 /// A collection of [`Route`]s.
 #[cfg(feature = "alloc")]
-pub type Routes = crate::collections::Collection<Route>;
+pub type Routes = crate::utils::collections::Collection<Route>;
 
 #[cfg(feature = "alloc")]
 #[cfg(test)]

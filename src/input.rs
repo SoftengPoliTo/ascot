@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 
 /// An [`Input`] structure.
-#[cfg(feature = "alloc")]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum InputStructure {
     /// A [`bool`] value.
@@ -86,7 +85,6 @@ pub enum InputStructure {
 }
 
 /// Input data.
-#[cfg(feature = "alloc")]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InputData {
     /// Name.
@@ -126,11 +124,9 @@ impl From<Input> for InputData {
 }
 
 /// A collection of [`InputData`]s.
-#[cfg(feature = "alloc")]
-pub type InputsData = crate::collections::OutputCollection<InputData>;
+pub type InputsData = crate::utils::collections::OutputCollection<InputData>;
 
 /// All supported inputs.
-#[cfg(feature = "alloc")]
 #[derive(Debug, Clone)]
 pub struct Input {
     // Name.
@@ -302,10 +298,8 @@ impl Input {
 }
 
 /// A collection of [`Input`]s.
-#[cfg(feature = "alloc")]
-pub type Inputs = crate::collections::Collection<Input>;
+pub type Inputs = crate::utils::collections::Collection<Input>;
 
-#[cfg(feature = "alloc")]
 #[cfg(test)]
 mod tests {
     use crate::alloc::string::ToString;

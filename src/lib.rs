@@ -39,6 +39,7 @@ pub mod energy;
 /// Hazards descriptions and methods.
 pub mod hazards;
 /// Route input parameters.
+#[cfg(feature = "alloc")]
 pub mod input;
 /// All supported responses returned by a device action.
 pub mod response;

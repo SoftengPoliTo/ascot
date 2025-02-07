@@ -37,6 +37,22 @@ impl core::fmt::Display for DeviceKind {
     }
 }
 
+/// Device environment.
+///
+/// Some information about the device environment on which a firmware runs on.
+/// It might be an operating system or the name of the underlying hardware
+/// architecture.
+///
+/// This enumerator allows to discriminate the different implementations among
+/// the supported architectures on a controller side.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub enum DeviceEnvironment {
+    /// Operating system.
+    Os,
+    /// Esp32.
+    Esp32,
+}
+
 /// Device information.
 #[cfg(feature = "alloc")]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
@@ -51,6 +67,7 @@ pub struct DeviceInfo {
     pub economy: Economy,
 }
 
+#[cfg(feature = "alloc")]
 impl DeviceInfo {
     /// Creates a [`DeviceInfo`].
     #[must_use]
@@ -76,25 +93,9 @@ impl DeviceInfo {
     }
 }
 
-/// Device environment.
-///
-/// Some information about the device environment on which a firmware runs on.
-/// It might be an operating system or the name of the underlying hardware
-/// architecture.
-///
-/// This enumerator allows to discriminate the different implementations among
-/// the supported architectures on a controller side.
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
-pub enum DeviceEnvironment {
-    /// Operating system.
-    Os,
-    /// Esp32.
-    Esp32,
-}
-
 /// Device data.
 #[cfg(feature = "alloc")]
-#[derive(Debug, Serialize. Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct DeviceData {
     /// Device kind.
     pub kind: DeviceKind,
@@ -107,6 +108,7 @@ pub struct DeviceData {
     pub route_configs: RouteConfigs,
 }
 
+#[cfg(feature = "alloc")]
 impl DeviceData {
     /// Creates a [`DeviceData`].
     #[must_use]

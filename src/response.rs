@@ -4,6 +4,8 @@ use alloc::string::String;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 use crate::actions::ActionError;
+
+#[cfg(feature = "alloc")]
 use crate::device::DeviceInfo;
 
 /// Action response kinds.
@@ -64,6 +66,7 @@ impl<T: Serialize + DeserializeOwned> SerialResponse<T> {
 /// Informative response.
 ///
 /// This response provides economy and energy information of a device.
+#[cfg(feature = "alloc")]
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct InfoResponse {
     #[serde(flatten)]
@@ -183,6 +186,7 @@ mod tests {
         );
     }
 
+    #[cfg(feature = "alloc")]
     #[test]
     fn test_info_response() {
         let energy =

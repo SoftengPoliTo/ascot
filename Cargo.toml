@@ -19,8 +19,8 @@ serde.default-features = false
 serde.features = ["derive"]
 
 serde_json.version = "1"
-serde.default-features = false
-serde.features = ["alloc"]
+serde_json.default-features = false
+serde_json.features = ["alloc"]
 
 [features]
 alloc = ["indexmap/serde", "serde_json/preserve_order"]
