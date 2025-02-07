@@ -35,7 +35,7 @@ macro_rules! from_collection {
 }
 
 macro_rules! implementation {
-    ($impl:ident $(,$trait:ident)?) => {
+    ($impl:ident) => {
         impl<'a, T, const N: usize> IntoIterator for &'a $impl<T, N>
         where
             T: Clone + Copy + PartialEq + Eq + Hash,

@@ -119,7 +119,7 @@ impl<const N: usize> Hash for Route<N> {
     }
 }
 
-impl<const N: usize> Route<N> {
+impl Route<2> {
     /// Creates a new [`Route`] through a REST `GET` API.
     #[must_use]
     #[inline]
@@ -148,6 +148,18 @@ impl<const N: usize> Route<N> {
         Self::init(RestKind::Delete, route)
     }
 
+    fn init(rest_kind: RestKind, route: &'static str) -> Self {
+        Route::<2> {
+            route,
+            rest_kind,
+            description: None,
+            hazards: Hazards::empty(),
+            inputs: Inputs::empty(),
+        }
+    }
+}
+
+impl<const N: usize> Route<N> {
     /// Sets the route description.
     #[must_use]
     pub const fn description(mut self, description: &'static str) -> Self {
@@ -236,16 +248,6 @@ impl<const N: usize> Route<N> {
     pub fn serialize_data(self) -> RouteConfig<N> {
         RouteConfig::new(self)
     }
-
-    fn init(rest_kind: RestKind, route: &'static str) -> Self {
-        Self {
-            route,
-            rest_kind,
-            description: None,
-            hazards: Hazards::empty(),
-            inputs: Inputs::empty(),
-        }
-    }
 }
 
 /// A collection of [`Route`]s.
@@ -322,7 +324,7 @@ mod tests {
     fn test_all_hazards() {
         assert_eq!(
             serialize(
-                Route::get("/route")
+                Route::<2>::get("/route")
                     .description("A GET route")
                     .with_hazard(Hazard::FireHazard)
                     .serialize_data()
@@ -340,7 +342,7 @@ mod tests {
 
         assert_eq!(
             serialize(
-                Route::get("/route")
+                Route::<2>::get("/route")
                     .description("A GET route")
                     .with_hazards(
                         Hazards::empty()
@@ -363,7 +365,7 @@ mod tests {
 
         assert_eq!(
             serialize(
-                Route::get("/route")
+                Route::<2>::get("/route")
                     .description("A GET route")
                     .with_slice_hazards(&[Hazard::FireHazard, Hazard::AirPoisoning])
                     .serialize_data()
@@ -417,7 +419,7 @@ mod tests {
 
         assert_eq!(
             serialize(
-                Route::get("/route")
+                Route::<2>::get("/route")
                     .description("A GET route")
                     .with_input(Input::rangeu64_with_default("rangeu64", (0, 20, 1), 5))
                     .with_input(Input::rangef64("rangef64", (0., 20., 0.1)))
@@ -428,7 +430,7 @@ mod tests {
 
         assert_eq!(
             serialize(
-                Route::get("/route")
+                Route::<2>::get("/route")
                     .description("A GET route")
                     .with_inputs([
                         Input::rangeu64_with_default("rangeu64", (0, 20, 1), 5),
