@@ -1,10 +1,10 @@
-use ascot_library::device::{DeviceEnvironment, DeviceKind};
-
 use serde::{Deserialize, Serialize};
 
 use crate::economy::Economy;
 use crate::energy::Energy;
 use crate::route::RouteConfigs;
+
+pub use ascot_library::device::{DeviceEnvironment, DeviceKind};
 
 /// Device information.
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]

@@ -1,13 +1,14 @@
 use core::hash::{Hash, Hasher};
 
 use ascot_library::response::ResponseKind;
-use ascot_library::route::RestKind;
 
 use serde::Serialize;
 
 use crate::hazards::Hazards;
 use crate::input::{Inputs, InputsData};
 use crate::utils::collections::{Collection, SerialCollection};
+
+pub use ascot_library::route::RestKind;
 
 /// Route data.
 #[derive(Debug, Clone, Serialize)]

@@ -1,7 +1,8 @@
-use ascot_library::economy::{Cost, Roi};
 use serde::{Deserialize, Serialize};
 
 use crate::utils::collections::OutputCollection;
+
+pub use ascot_library::economy::{Cost, CostTimespan, Roi};
 
 /// A collection of [`Cost`]s.
 pub type Costs<const C: usize> = OutputCollection<Cost, C>;
