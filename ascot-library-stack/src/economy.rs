@@ -20,18 +20,16 @@ pub struct Economy<const C: usize, const R: usize> {
     pub roi: Option<Rois<R>>,
 }
 
-impl Economy<2, 2> {
+impl<const C: usize, const R: usize> Economy<C, R> {
     /// Creates an empty [`Economy`] instance.
     #[must_use]
     pub const fn empty() -> Self {
-        Economy::<2, 2> {
+        Self {
             costs: None,
             roi: None,
         }
     }
-}
 
-impl<const C: usize, const R: usize> Economy<C, R> {
     /// Creates a new [`Economy`] instance initialized with [`Costs`] data.
     #[must_use]
     pub const fn init_with_costs(costs: Costs<C>) -> Economy<C, 2> {

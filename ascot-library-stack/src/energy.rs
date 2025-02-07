@@ -40,8 +40,10 @@ impl<const E: usize, const CF: usize> Energy<E, CF> {
     /// Creates a new [`Energy`] instance initialized with
     /// [`EnergyEfficiencies`] data.
     #[must_use]
-    pub const fn init_with_energy_efficiencies(energy_efficiencies: EnergyEfficiencies<E>) -> Self {
-        Self {
+    pub const fn init_with_energy_efficiencies(
+        energy_efficiencies: EnergyEfficiencies<E>,
+    ) -> Energy<E, 2> {
+        Energy::<E, 2> {
             energy_efficiencies: Some(energy_efficiencies),
             carbon_footprints: None,
             water_use_efficiency: None,
@@ -51,8 +53,10 @@ impl<const E: usize, const CF: usize> Energy<E, CF> {
     /// Creates a new [`Energy`] instance initialized with
     /// [`CarbonFootprints`] data.
     #[must_use]
-    pub const fn init_with_carbon_footprints(carbon_footprints: CarbonFootprints<N>) -> Self {
-        Self {
+    pub const fn init_with_carbon_footprints(
+        carbon_footprints: CarbonFootprints<CF>,
+    ) -> Energy<2, CF> {
+        Energy::<2, CF> {
             energy_efficiencies: None,
             carbon_footprints: Some(carbon_footprints),
             water_use_efficiency: None,
@@ -73,17 +77,29 @@ impl<const E: usize, const CF: usize> Energy<E, CF> {
     /// Adds [`EnergyEfficiencies`] data.
     #[must_use]
     #[inline]
-    pub fn energy_efficiencies(mut self, energy_efficiencies: EnergyEfficiencies<N>) -> Self {
-        self.energy_efficiencies = Some(energy_efficiencies);
-        self
+    pub fn energy_efficiencies<const E2: usize>(
+        self,
+        energy_efficiencies: EnergyEfficiencies<E2>,
+    ) -> Energy<E2, CF> {
+        Energy::<E2, CF> {
+            energy_efficiencies: Some(energy_efficiencies),
+            carbon_footprints: self.carbon_footprints,
+            water_use_efficiency: self.water_use_efficiency,
+        }
     }
 
     /// Adds [`CarbonFootprints`] data.
     #[must_use]
     #[inline]
-    pub fn carbon_footprints(mut self, carbon_footprints: CarbonFootprints<N>) -> Self {
-        self.carbon_footprints = Some(carbon_footprints);
-        self
+    pub fn carbon_footprints<const CF2: usize>(
+        self,
+        carbon_footprints: CarbonFootprints<CF2>,
+    ) -> Energy<E, CF2> {
+        Energy::<E, CF2> {
+            energy_efficiencies: self.energy_efficiencies,
+            carbon_footprints: Some(carbon_footprints),
+            water_use_efficiency: self.water_use_efficiency,
+        }
     }
 
     /// Adds [`WaterUseEfficiency`] data.

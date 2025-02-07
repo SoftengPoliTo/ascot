@@ -9,15 +9,15 @@ use crate::utils::string::String;
 ///
 /// This response provides economy and energy information of a device.
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
-pub struct InfoResponse<const C: usize, const R: usize, const N: usize> {
+pub struct InfoResponse<const C: usize, const R: usize, const E: usize, const CF: usize> {
     #[serde(flatten)]
-    data: DeviceInfo<C, R, N>,
+    data: DeviceInfo<C, R, E, CF>,
 }
 
-impl<const C: usize, const R: usize, const N: usize> InfoResponse<C, R, N> {
+impl<const C: usize, const R: usize, const E: usize, const CF: usize> InfoResponse<C, R, E, CF> {
     /// Creates a [`InfoResponse`].
     #[must_use]
-    pub const fn new(data: DeviceInfo<C, R, N>) -> Self {
+    pub const fn new(data: DeviceInfo<C, R, E, CF>) -> Self {
         Self { data }
     }
 }
