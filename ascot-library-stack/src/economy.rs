@@ -4,10 +4,10 @@ use serde::{Deserialize, Serialize};
 use crate::utils::collections::OutputCollection;
 
 /// A collection of [`Cost`]s.
-pub type Costs<const N: usize> = OutputCollection<Cost, N>;
+pub type Costs<const C: usize> = OutputCollection<Cost, C>;
 
 /// A collection of [`Roi`]s.
-pub type Rois<const N: usize> = OutputCollection<Roi, N>;
+pub type Rois<const R: usize> = OutputCollection<Roi, R>;
 
 /// Economy data for a device.
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
@@ -20,31 +20,31 @@ pub struct Economy<const C: usize, const R: usize> {
     pub roi: Option<Rois<R>>,
 }
 
-impl<const C: usize, const R: usize> Economy<C, R> {
+impl Economy<2, 2> {
     /// Creates an empty [`Economy`] instance.
     #[must_use]
     pub const fn empty() -> Self {
-        Self {
+        Economy::<2, 2> {
             costs: None,
             roi: None,
         }
     }
+}
 
-    /// Creates a new [`Economy`] instance initialized with
-    /// [`Costs`] data.
+impl<const C: usize, const R: usize> Economy<C, R> {
+    /// Creates a new [`Economy`] instance initialized with [`Costs`] data.
     #[must_use]
-    pub const fn init_with_costs(costs: Costs<C>) -> Self {
-        Self {
+    pub const fn init_with_costs(costs: Costs<C>) -> Economy<C, 2> {
+        Economy::<C, 2> {
             costs: Some(costs),
             roi: None,
         }
     }
 
-    /// Creates a new [`Economy`] instance initialized with
-    /// [`Rois`] data.
+    /// Creates a new [`Economy`] instance initialized with [`Rois`] data.
     #[must_use]
-    pub const fn init_with_roi(roi: Rois<R>) -> Self {
-        Self {
+    pub const fn init_with_roi(roi: Rois<R>) -> Economy<2, R> {
+        Economy::<2, R> {
             costs: None,
             roi: Some(roi),
         }

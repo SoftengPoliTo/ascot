@@ -4,29 +4,29 @@ use serde::{Deserialize, Serialize};
 use crate::utils::collections::OutputCollection;
 
 /// A collection of [`EnergyEfficiency`]s.
-pub type EnergyEfficiencies<const N: usize> = OutputCollection<EnergyEfficiency, N>;
+pub type EnergyEfficiencies<const E: usize> = OutputCollection<EnergyEfficiency, E>;
 
 /// A collection of [`CarbonFootprints`]s.
-pub type CarbonFootprints<const N: usize> = OutputCollection<CarbonFootprint, N>;
+pub type CarbonFootprints<const CF: usize> = OutputCollection<CarbonFootprint, CF>;
 
 /// Energy information of a device.
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
-pub struct Energy<const N: usize> {
+pub struct Energy<const E: usize, const CF: usize> {
     /// Energy efficiencies.
     #[serde(rename = "energy-efficiencies")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub energy_efficiencies: Option<EnergyEfficiencies<N>>,
+    pub energy_efficiencies: Option<EnergyEfficiencies<E>>,
     /// Carbon footprints.
     #[serde(rename = "carbon-footprints")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub carbon_footprints: Option<CarbonFootprints<N>>,
+    pub carbon_footprints: Option<CarbonFootprints<CF>>,
     /// Water-Use efficiency.
     #[serde(rename = "water-use-efficiency")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub water_use_efficiency: Option<WaterUseEfficiency>,
 }
 
-impl<const N: usize> Energy<N> {
+impl<const E: usize, const CF: usize> Energy<E, CF> {
     /// Creates an empty [`Energy`] instance.
     #[must_use]
     pub const fn empty() -> Self {
@@ -40,7 +40,7 @@ impl<const N: usize> Energy<N> {
     /// Creates a new [`Energy`] instance initialized with
     /// [`EnergyEfficiencies`] data.
     #[must_use]
-    pub const fn init_with_energy_efficiencies(energy_efficiencies: EnergyEfficiencies<N>) -> Self {
+    pub const fn init_with_energy_efficiencies(energy_efficiencies: EnergyEfficiencies<E>) -> Self {
         Self {
             energy_efficiencies: Some(energy_efficiencies),
             carbon_footprints: None,
