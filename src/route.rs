@@ -1,13 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-use crate::hazards::Hazard;
-use crate::response::ResponseKind;
-
-#[cfg(feature = "alloc")]
-use crate::hazards::Hazards;
-#[cfg(feature = "alloc")]
-use crate::input::{Input, Inputs, InputsData};
-
 /// `REST` requests kind.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum RestKind {
@@ -33,261 +25,268 @@ impl core::fmt::Display for RestKind {
     }
 }
 
-/// Route data.
 #[cfg(feature = "alloc")]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct RouteData {
-    /// Name.
-    pub name: alloc::borrow::Cow<'static, str>,
-    /// Description.
-    pub description: Option<alloc::borrow::Cow<'static, str>>,
-    /// Hazards data.
-    #[serde(skip_serializing_if = "Hazards::is_empty")]
-    #[serde(default = "Hazards::empty")]
-    pub hazards: Hazards,
-    /// Inputs associated with a route..
-    #[serde(skip_serializing_if = "InputsData::is_empty")]
-    #[serde(default = "InputsData::empty")]
-    pub inputs: InputsData,
-}
+mod route {
+    use crate::hazards::{Hazard, Hazards};
+    use crate::input::{Input, Inputs, InputsData};
+    use crate::response::ResponseKind;
 
-impl PartialEq for RouteData {
-    fn eq(&self, other: &Self) -> bool {
-        self.name.eq(&other.name)
+    use super::{Deserialize, RestKind, Serialize};
+
+    /// Route data.
+    #[derive(Debug, Clone, Serialize, Deserialize)]
+    pub struct RouteData {
+        /// Name.
+        pub name: alloc::borrow::Cow<'static, str>,
+        /// Description.
+        pub description: Option<alloc::borrow::Cow<'static, str>>,
+        /// Hazards data.
+        #[serde(skip_serializing_if = "Hazards::is_empty")]
+        #[serde(default = "Hazards::empty")]
+        pub hazards: Hazards,
+        /// Inputs associated with a route..
+        #[serde(skip_serializing_if = "InputsData::is_empty")]
+        #[serde(default = "InputsData::empty")]
+        pub inputs: InputsData,
     }
-}
 
-impl RouteData {
-    fn new(route: Route) -> Self {
-        Self {
-            name: route.route.into(),
-            description: route.description.map(core::convert::Into::into),
-            hazards: route.hazards,
-            inputs: InputsData::from(route.inputs),
+    impl PartialEq for RouteData {
+        fn eq(&self, other: &Self) -> bool {
+            self.name.eq(&other.name)
         }
     }
-}
 
-/// A server route configuration.
-#[cfg(feature = "alloc")]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct RouteConfig {
-    /// Route.
-    #[serde(flatten)]
-    pub data: RouteData,
-    /// **_REST_** kind..
-    #[serde(rename = "REST kind")]
-    pub rest_kind: RestKind,
-    /// Response kind.
-    #[serde(rename = "response kind")]
-    pub response_kind: ResponseKind,
-}
-
-impl PartialEq for RouteConfig {
-    fn eq(&self, other: &Self) -> bool {
-        self.data.eq(&other.data) && self.rest_kind == other.rest_kind
-    }
-}
-
-impl Eq for RouteConfig {}
-
-impl core::hash::Hash for RouteConfig {
-    fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
-        self.data.name.hash(state);
-        self.rest_kind.hash(state);
-    }
-}
-
-impl RouteConfig {
-    fn new(route: Route) -> Self {
-        Self {
-            rest_kind: route.rest_kind,
-            response_kind: ResponseKind::default(),
-            data: RouteData::new(route),
+    impl RouteData {
+        fn new(route: Route) -> Self {
+            Self {
+                name: route.route.into(),
+                description: route.description.map(core::convert::Into::into),
+                hazards: route.hazards,
+                inputs: InputsData::from(route.inputs),
+            }
         }
     }
-}
 
-/// A collection of [`RouteConfig`]s.
-#[cfg(feature = "alloc")]
-pub type RouteConfigs = crate::utils::collections::OutputCollection<RouteConfig>;
-
-/// A server route.
-///
-/// It represents a specific `REST` API which, when invoked, runs a task on
-/// a remote device.
-#[cfg(feature = "alloc")]
-#[derive(Debug)]
-pub struct Route {
-    // Route.
-    route: &'static str,
-    // REST kind.
-    rest_kind: RestKind,
-    // Description.
-    description: Option<&'static str>,
-    // Inputs.
-    inputs: Inputs,
-    // Hazards.
-    hazards: Hazards,
-}
-
-impl PartialEq for Route {
-    fn eq(&self, other: &Self) -> bool {
-        self.route == other.route && self.rest_kind == other.rest_kind
-    }
-}
-
-impl Eq for Route {}
-
-impl core::hash::Hash for Route {
-    fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
-        self.route.hash(state);
-        self.rest_kind.hash(state);
-    }
-}
-
-impl Route {
-    /// Creates a new [`Route`] through a REST `GET` API.
-    #[must_use]
-    #[inline]
-    pub fn get(route: &'static str) -> Self {
-        Self::init(RestKind::Get, route)
+    /// A server route configuration.
+    #[derive(Debug, Clone, Serialize, Deserialize)]
+    pub struct RouteConfig {
+        /// Route.
+        #[serde(flatten)]
+        pub data: RouteData,
+        /// **_REST_** kind..
+        #[serde(rename = "REST kind")]
+        pub rest_kind: RestKind,
+        /// Response kind.
+        #[serde(rename = "response kind")]
+        pub response_kind: ResponseKind,
     }
 
-    /// Creates a new [`Route`] through a REST `PUT` API.
-    #[must_use]
-    #[inline]
-    pub fn put(route: &'static str) -> Self {
-        Self::init(RestKind::Put, route)
-    }
-
-    /// Creates a new [`Route`] through a REST `POST` API.
-    #[must_use]
-    #[inline]
-    pub fn post(route: &'static str) -> Self {
-        Self::init(RestKind::Post, route)
-    }
-
-    /// Creates a new [`Route`] through a REST `DELETE` API.
-    #[must_use]
-    #[inline]
-    pub fn delete(route: &'static str) -> Self {
-        Self::init(RestKind::Delete, route)
-    }
-
-    /// Sets the route description.
-    #[must_use]
-    pub const fn description(mut self, description: &'static str) -> Self {
-        self.description = Some(description);
-        self
-    }
-
-    /// Changes the route.
-    #[must_use]
-    pub const fn change_route(mut self, route: &'static str) -> Self {
-        self.route = route;
-        self
-    }
-
-    /// Adds a single [`Input`] to a [`Route`].
-    #[must_use]
-    #[inline]
-    pub fn with_input(mut self, input: Input) -> Self {
-        self.inputs.add(input);
-        self
-    }
-
-    /// Adds [`Input`] array to a [`Route`].
-    #[must_use]
-    #[inline]
-    pub fn with_inputs<const N: usize>(mut self, inputs: [Input; N]) -> Self {
-        for input in inputs {
-            self.inputs.add(input);
+    impl PartialEq for RouteConfig {
+        fn eq(&self, other: &Self) -> bool {
+            self.data.eq(&other.data) && self.rest_kind == other.rest_kind
         }
-        self
     }
 
-    /// Adds [`Hazards`] to a [`Route`].
-    #[must_use]
-    #[inline]
-    pub fn with_hazards(mut self, hazards: Hazards) -> Self {
-        self.hazards = hazards;
-        self
+    impl Eq for RouteConfig {}
+
+    impl core::hash::Hash for RouteConfig {
+        fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+            self.data.name.hash(state);
+            self.rest_kind.hash(state);
+        }
     }
 
-    /// Adds an [`Hazard`] to a [`Route`].
-    #[must_use]
-    #[inline]
-    pub fn with_hazard(mut self, hazard: Hazard) -> Self {
-        self.hazards = Hazards::init(hazard);
-        self
+    impl RouteConfig {
+        fn new(route: Route) -> Self {
+            Self {
+                rest_kind: route.rest_kind,
+                response_kind: ResponseKind::default(),
+                data: RouteData::new(route),
+            }
+        }
     }
 
-    /// Adds a slice of [`Hazard`]s to a [`Route`].
-    #[must_use]
-    #[inline]
-    pub fn with_slice_hazards(mut self, hazards: &'static [Hazard]) -> Self {
-        self.hazards = Hazards::init_with_elements(hazards);
-        self
-    }
+    /// A collection of [`RouteConfig`]s.
+    pub type RouteConfigs = crate::utils::collections::OutputCollection<RouteConfig>;
 
-    /// Returns route.
-    #[must_use]
-    pub fn route(&self) -> &str {
-        self.route
-    }
-
-    /// Returns [`RestKind`].
-    #[must_use]
-    pub const fn kind(&self) -> RestKind {
-        self.rest_kind
-    }
-
-    /// Returns [`Hazards`].
-    #[must_use]
-    pub const fn hazards(&self) -> &Hazards {
-        &self.hazards
-    }
-
-    /// Returns [`Inputs`].
-    #[must_use]
-    pub const fn inputs(&self) -> &Inputs {
-        &self.inputs
-    }
-
-    /// Serializes [`Route`] data.
+    /// A server route.
     ///
-    /// It consumes the data.
-    #[must_use]
-    #[inline]
-    pub fn serialize_data(self) -> RouteConfig {
-        RouteConfig::new(self)
+    /// It represents a specific `REST` API which, when invoked, runs a task on
+    /// a remote device.
+    #[derive(Debug)]
+    pub struct Route {
+        // Route.
+        route: &'static str,
+        // REST kind.
+        rest_kind: RestKind,
+        // Description.
+        description: Option<&'static str>,
+        // Inputs.
+        inputs: Inputs,
+        // Hazards.
+        hazards: Hazards,
     }
 
-    fn init(rest_kind: RestKind, route: &'static str) -> Self {
-        Self {
-            route,
-            rest_kind,
-            description: None,
-            hazards: Hazards::empty(),
-            inputs: Inputs::empty(),
+    impl PartialEq for Route {
+        fn eq(&self, other: &Self) -> bool {
+            self.route == other.route && self.rest_kind == other.rest_kind
         }
     }
+
+    impl Eq for Route {}
+
+    impl core::hash::Hash for Route {
+        fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+            self.route.hash(state);
+            self.rest_kind.hash(state);
+        }
+    }
+
+    impl Route {
+        /// Creates a new [`Route`] through a REST `GET` API.
+        #[must_use]
+        #[inline]
+        pub fn get(route: &'static str) -> Self {
+            Self::init(RestKind::Get, route)
+        }
+
+        /// Creates a new [`Route`] through a REST `PUT` API.
+        #[must_use]
+        #[inline]
+        pub fn put(route: &'static str) -> Self {
+            Self::init(RestKind::Put, route)
+        }
+
+        /// Creates a new [`Route`] through a REST `POST` API.
+        #[must_use]
+        #[inline]
+        pub fn post(route: &'static str) -> Self {
+            Self::init(RestKind::Post, route)
+        }
+
+        /// Creates a new [`Route`] through a REST `DELETE` API.
+        #[must_use]
+        #[inline]
+        pub fn delete(route: &'static str) -> Self {
+            Self::init(RestKind::Delete, route)
+        }
+
+        /// Sets the route description.
+        #[must_use]
+        pub const fn description(mut self, description: &'static str) -> Self {
+            self.description = Some(description);
+            self
+        }
+
+        /// Changes the route.
+        #[must_use]
+        pub const fn change_route(mut self, route: &'static str) -> Self {
+            self.route = route;
+            self
+        }
+
+        /// Adds a single [`Input`] to a [`Route`].
+        #[must_use]
+        #[inline]
+        pub fn with_input(mut self, input: Input) -> Self {
+            self.inputs.add(input);
+            self
+        }
+
+        /// Adds [`Input`] array to a [`Route`].
+        #[must_use]
+        #[inline]
+        pub fn with_inputs<const N: usize>(mut self, inputs: [Input; N]) -> Self {
+            for input in inputs {
+                self.inputs.add(input);
+            }
+            self
+        }
+
+        /// Adds [`Hazards`] to a [`Route`].
+        #[must_use]
+        #[inline]
+        pub fn with_hazards(mut self, hazards: Hazards) -> Self {
+            self.hazards = hazards;
+            self
+        }
+
+        /// Adds an [`Hazard`] to a [`Route`].
+        #[must_use]
+        #[inline]
+        pub fn with_hazard(mut self, hazard: Hazard) -> Self {
+            self.hazards = Hazards::init(hazard);
+            self
+        }
+
+        /// Adds a slice of [`Hazard`]s to a [`Route`].
+        #[must_use]
+        #[inline]
+        pub fn with_slice_hazards(mut self, hazards: &'static [Hazard]) -> Self {
+            self.hazards = Hazards::init_with_elements(hazards);
+            self
+        }
+
+        /// Returns route.
+        #[must_use]
+        pub fn route(&self) -> &str {
+            self.route
+        }
+
+        /// Returns [`RestKind`].
+        #[must_use]
+        pub const fn kind(&self) -> RestKind {
+            self.rest_kind
+        }
+
+        /// Returns [`Hazards`].
+        #[must_use]
+        pub const fn hazards(&self) -> &Hazards {
+            &self.hazards
+        }
+
+        /// Returns [`Inputs`].
+        #[must_use]
+        pub const fn inputs(&self) -> &Inputs {
+            &self.inputs
+        }
+
+        /// Serializes [`Route`] data.
+        ///
+        /// It consumes the data.
+        #[must_use]
+        #[inline]
+        pub fn serialize_data(self) -> RouteConfig {
+            RouteConfig::new(self)
+        }
+
+        fn init(rest_kind: RestKind, route: &'static str) -> Self {
+            Self {
+                route,
+                rest_kind,
+                description: None,
+                hazards: Hazards::empty(),
+                inputs: Inputs::empty(),
+            }
+        }
+    }
+
+    /// A collection of [`Route`]s.
+    pub type Routes = crate::utils::collections::Collection<Route>;
 }
 
-/// A collection of [`Route`]s.
 #[cfg(feature = "alloc")]
-pub type Routes = crate::utils::collections::Collection<Route>;
+pub use route::{Route, RouteConfig, RouteConfigs, RouteData, Routes};
 
 #[cfg(feature = "alloc")]
 #[cfg(test)]
 mod tests {
-    use crate::input::InputData;
+    use crate::hazards::{Hazard, Hazards};
+    use crate::input::{Input, InputData, InputsData};
+    use crate::response::ResponseKind;
     use crate::{deserialize, serialize};
 
-    use super::{
-        Hazard, Hazards, Input, InputsData, ResponseKind, RestKind, Route, RouteConfig, RouteData,
-    };
+    use super::{RestKind, Route, RouteConfig, RouteData};
 
     fn route_config_empty(rest_kind: RestKind, desc: &'static str) -> RouteConfig {
         route_config_hazards(rest_kind, Hazards::empty(), desc)

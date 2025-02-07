@@ -3,6 +3,7 @@ use alloc::string::String;
 
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
+#[cfg(feature = "alloc")]
 use crate::actions::ActionError;
 
 #[cfg(feature = "alloc")]
@@ -73,6 +74,7 @@ pub struct InfoResponse {
     data: DeviceInfo,
 }
 
+#[cfg(feature = "alloc")]
 impl InfoResponse {
     /// Creates a [`InfoResponse`].
     #[must_use]
@@ -96,6 +98,7 @@ pub struct ErrorResponse {
     pub info: Option<String>,
 }
 
+#[cfg(feature = "alloc")]
 impl ErrorResponse {
     /// Creates an [`ErrorResponse`] with a specific [`ActionError`] and
     /// a description.
