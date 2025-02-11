@@ -261,6 +261,12 @@ macro_rules! map_implementation {
                 self.0.contains_key(key)
             }
 
+            #[doc = concat!("Gets a value with the given key from [`", stringify!($impl), "`].")]
+            #[inline]
+            pub fn get(&self, key: &K) -> Option<&V> {
+                self.0.get(key)
+            }
+
             #[doc = concat!("Returns an iterator over the [`", stringify!($impl), "`].")]
             #[doc = ""]
             #[doc = "**It iterates in the insertion order.**"]

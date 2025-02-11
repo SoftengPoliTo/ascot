@@ -61,7 +61,7 @@ impl OkResponse {
 /// Serial response.
 ///
 /// This response provides more detailed information about an action.
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(bound = "T: Serialize + DeserializeOwned")]
 pub struct SerialResponse<T: DeserializeOwned> {
     #[serde(flatten)]

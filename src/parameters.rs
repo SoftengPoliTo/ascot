@@ -1,5 +1,5 @@
 #[cfg(feature = "alloc")]
-use crate::alloc::string::ToString;
+use alloc::string::String;
 
 use serde::Serialize;
 
@@ -94,7 +94,7 @@ pub enum ParameterKind {
 
 /// A map of serializable and deserializable [`Parameters`] data.
 #[cfg(feature = "alloc")]
-pub type ParametersData = crate::collections::OutputMap<alloc::string::String, ParameterKind>;
+pub type ParametersData = crate::collections::OutputMap<String, ParameterKind>;
 
 /// A map of serializable [`Parameters`] data.
 #[cfg(feature = "stack")]
@@ -255,7 +255,7 @@ impl Parameters {
     pub fn serialize_data(self) -> ParametersData {
         let mut data = ParametersData::new();
         for (key, value) in self.0 {
-            data.add(key.to_string(), value);
+            data.add(key.into(), value);
         }
         data
     }

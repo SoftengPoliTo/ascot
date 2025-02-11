@@ -2,27 +2,28 @@ use core::hash::Hash;
 
 use indexmap::map::IndexMap;
 use indexmap::set::IndexSet;
+use indexmap::Equivalent;
 
 use serde::{Deserialize, Serialize};
 
 /// A set of elements for internal storage.
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct Set<V: PartialEq + Eq + Hash>(IndexSet<V>);
+#[derive(Debug, Clone)]
+pub struct Set<V: Eq + Hash>(IndexSet<V>);
 
 /// A serializable set of elements.
-#[derive(Debug, PartialEq, Eq, Clone, Serialize)]
-pub struct SerialSet<V: PartialEq + Eq + Hash>(IndexSet<V>);
+#[derive(Debug, Clone, Serialize)]
+pub struct SerialSet<V: Eq + Hash>(IndexSet<V>);
 
 /// A serializable and deserializable set of elements.
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
-pub struct OutputSet<V: PartialEq + Eq + Hash>(IndexSet<V>);
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct OutputSet<V: Eq + Hash>(IndexSet<V>);
 
 macro_rules! from_set {
     ($for:ident) => {
         impl<V, V1> From<Set<V1>> for $for<V>
         where
-            V: Clone + PartialEq + Eq + Hash + From<V1>,
-            V1: Clone + PartialEq + Eq + Hash,
+            V: Clone + Eq + Hash + From<V1>,
+            V1: Clone + Eq + Hash,
         {
             fn from(set: Set<V1>) -> Self {
                 let mut new_set = Self::new();
@@ -39,7 +40,7 @@ macro_rules! set_implementation {
     ($impl:ident) => {
         impl<V> IntoIterator for $impl<V>
         where
-            V: Clone + PartialEq + Eq + Hash,
+            V: Clone + Eq + Hash,
         {
             type Item = V;
             type IntoIter = indexmap::set::IntoIter<V>;
@@ -51,7 +52,7 @@ macro_rules! set_implementation {
 
         impl<'a, V> IntoIterator for &'a $impl<V>
         where
-            V: Clone + PartialEq + Eq + Hash,
+            V: Clone + Eq + Hash,
         {
             type Item = &'a V;
             type IntoIter = indexmap::set::Iter<'a, V>;
@@ -63,7 +64,7 @@ macro_rules! set_implementation {
 
         impl<V> Default for $impl<V>
         where
-            V: Clone + PartialEq + Eq + Hash,
+            V: Clone + Eq + Hash,
         {
             fn default() -> Self {
                 Self::new()
@@ -72,7 +73,7 @@ macro_rules! set_implementation {
 
         impl<V> $impl<V>
         where
-            V: Clone + PartialEq + Eq +  Hash,
+            V: Clone + Eq +  Hash,
         {
             #[doc = concat!("Creates a [`", stringify!($impl), "`].")]
             #[must_use]
@@ -165,25 +166,25 @@ from_set!(SerialSet);
 from_set!(OutputSet);
 
 /// A map of elements for internal storage.
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct Map<K: PartialEq + Eq + Hash, V>(IndexMap<K, V>);
+#[derive(Debug, Clone)]
+pub struct Map<K: Eq + Hash, V>(IndexMap<K, V>);
 
 /// A serializable map of elements.
-#[derive(Debug, PartialEq, Eq, Clone, Serialize)]
-pub struct SerialMap<K: PartialEq + Eq + Hash, V>(IndexMap<K, V>);
+#[derive(Debug, Clone, Serialize)]
+pub struct SerialMap<K: Eq + Hash, V>(IndexMap<K, V>);
 
 /// A serializable and deserializable map of elements.
-#[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
-pub struct OutputMap<K: PartialEq + Eq + Hash, V>(IndexMap<K, V>);
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct OutputMap<K: Eq + Hash, V>(IndexMap<K, V>);
 
 macro_rules! from_map {
     ($for:ident) => {
         impl<K, V, K1, V1> From<Map<K1, V1>> for $for<K, V>
         where
-            K: Clone + PartialEq + Eq + Hash + From<K1>,
-            V: Clone + PartialEq + Eq + Hash + From<V1>,
-            K1: Clone + PartialEq + Eq + Hash,
-            V1: Clone + PartialEq + Eq + Hash,
+            K: Clone + Eq + Hash + From<K1>,
+            V: Clone + From<V1>,
+            K1: Clone + Eq + Hash,
+            V1: Clone,
         {
             fn from(map: Map<K1, V1>) -> Self {
                 let mut new_map = Self::new();
@@ -202,8 +203,7 @@ macro_rules! map_implementation {
     ($impl:ident) => {
         impl<K, V> IntoIterator for $impl<K, V>
         where
-            K: Clone + PartialEq + Eq + Hash,
-            V: Clone
+            K: Clone + Eq + Hash,
         {
             type Item = (K, V);
             type IntoIter = indexmap::map::IntoIter<K, V>;
@@ -215,7 +215,7 @@ macro_rules! map_implementation {
 
         impl<'a, K, V> IntoIterator for &'a $impl<K, V>
         where
-            K: Clone + PartialEq + Eq + Hash,
+            K: Clone + Eq + Hash,
             V: Clone
         {
             type Item = (&'a K, &'a V);
@@ -228,7 +228,7 @@ macro_rules! map_implementation {
 
         impl<K, V> Default for $impl<K, V>
         where
-            K: Clone + PartialEq + Eq + Hash,
+            K: Clone + Eq + Hash,
             V: Clone
         {
             fn default() -> Self {
@@ -238,14 +238,14 @@ macro_rules! map_implementation {
 
         impl<K, V> $impl<K, V>
         where
-            K: Clone + PartialEq + Eq +  Hash,
+            K: Clone + Eq + Hash,
             V: Clone
         {
             #[doc = concat!("Creates a [`", stringify!($impl), "`].")]
             #[must_use]
             #[inline]
             pub fn new() -> Self {
-                Self(IndexMap::default())
+                Self(IndexMap::new())
             }
 
             #[doc = concat!("Initializes a [`", stringify!($impl), "`] with a determined element.")]
@@ -285,8 +285,20 @@ macro_rules! map_implementation {
 
             #[doc = concat!("Checks whether the [`", stringify!($impl), "`] contains the given key.")]
             #[inline]
-            pub fn contains_key(&self, key: &K) -> bool {
+            pub fn contains_key<Q>(&self, key: &Q) -> bool
+            where
+                Q: ?Sized + Hash + Equivalent<K>,
+            {
                 self.0.contains_key(key)
+            }
+
+            #[doc = concat!("Gets a value with the given key from [`", stringify!($impl), "`].")]
+            #[inline]
+            pub fn get<Q>(&self, key: &Q) -> Option<&V>
+            where
+                Q: ?Sized + Hash + Equivalent<K>,
+            {
+                self.0.get(key)
             }
 
             #[doc = concat!("Returns an iterator over the [`", stringify!($impl), "`].")]

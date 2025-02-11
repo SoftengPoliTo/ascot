@@ -1,9 +1,46 @@
 [package]
 name = "ascot-controller"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
-ascot-library = { path = "../" }
-indexmap = "2.7.0"
-tracing = "0.1"
+ascot-library.path = ".."
+ascot-library.version = "0.1.0"
+
+bytes.version = "1.10.0"
+bytes.default-features = false
+
+futures-util.version = "0.3.31"
+futures-util.default-features = false
+
+indexmap.version = "2.7.0"
+indexmap.default-features = false
+
+mdns-sd.version = "0.13.1"
+
+reqwest.version = "0.12.12"
+reqwest.default-features = false
+reqwest.features = ["blocking", "json", "stream"]
+
+serde.version = "1.0"
+serde.default-features = false
+
+serde_json.version = "1"
+serde_json.default-features = false
+serde_json.features = ["alloc"]
+
+tracing.version = "0.1"
+tracing.default-features = false
+
+[dev-dependencies]
+ascot-axum.path = "../ascot-axum"
+ascot-axum.version = "0.1.0"
+
+serial_test.version = "3.2.0"
+serial_test.default-features = false
+
+tokio.version = "1.0"
+tokio.default-features = false
+tokio.features = ["rt", "rt-multi-thread", "macros"]
+
+tracing-subscriber.version = "0.3"
