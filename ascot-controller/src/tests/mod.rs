@@ -2,7 +2,7 @@ use std::net::Ipv4Addr;
 
 use ascot_library::device::{DeviceEnvironment, DeviceKind};
 use ascot_library::hazards::{Hazard, Hazards};
-use ascot_library::parameters::ParametersData;
+use ascot_library::parameters::{ParameterKind, Parameters, ParametersData};
 use ascot_library::response::ResponseKind;
 use ascot_library::route::{RestKind, Route};
 
@@ -65,7 +65,8 @@ async fn light(
         // Toggle `PUT` route.
         let toggle_route = Route::get("/toggle")
             .description("Toggle a light.")
-            .with_hazard(Hazard::ElectricEnergyConsumption);
+            .with_hazard(Hazard::ElectricEnergyConsumption)
+            .with_parameters(Parameters::new().rangeu64("brightness", (0, 20, 1)));
 
         device
             .main_route(FIRST_DEVICE_ROUTE)
@@ -111,7 +112,13 @@ fn build_route(device: &Device, route: &str) -> String {
     )
 }
 
-fn check_request(device: &Device, route: &str, kind: RestKind, hazards: Hazards) {
+fn check_request(
+    device: &Device,
+    route: &str,
+    kind: RestKind,
+    hazards: Hazards,
+    parameters_data: ParametersData,
+) {
     let request_sender = device.request(route);
 
     assert_eq!(
@@ -120,7 +127,7 @@ fn check_request(device: &Device, route: &str, kind: RestKind, hazards: Hazards)
             kind,
             hazards,
             route: build_route(device, route),
-            parameters_data: ParametersData::new(),
+            parameters_data,
             response_kind: ResponseKind::Ok,
             device_environment: DeviceEnvironment::Os,
         })
@@ -164,13 +171,34 @@ pub(crate) fn compare_device_data(device: &Device) {
     let hazards = Hazards::init(Hazard::ElectricEnergyConsumption);
 
     if device.description().main_route == FIRST_DEVICE_ROUTE {
+        let parameters_data = ParametersData::new().insert(
+            "brightness".into(),
+            ParameterKind::RangeU64 {
+                min: 0,
+                max: 20,
+                step: 1,
+                default: 0,
+            },
+        );
         // Check "/toggle" request
-        check_request(device, "/toggle", RestKind::Get, hazards.clone());
+        check_request(
+            device,
+            "/toggle",
+            RestKind::Get,
+            hazards.clone(),
+            parameters_data,
+        );
     }
 
     // Check "/on" request
-    check_request(device, "/on", RestKind::Put, hazards);
+    check_request(device, "/on", RestKind::Put, hazards, ParametersData::new());
 
     // Check "/off" request
-    check_request(device, "/off", RestKind::Put, Hazards::new());
+    check_request(
+        device,
+        "/off",
+        RestKind::Put,
+        Hazards::new(),
+        ParametersData::new(),
+    );
 }
