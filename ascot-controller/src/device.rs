@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::net::IpAddr;
 
-use ascot_library::device::{DeviceEnvironment, DeviceKind};
+use ascot_library::device::{DeviceData, DeviceEnvironment, DeviceKind};
 
 use crate::request::RequestSender;
 
@@ -119,6 +119,14 @@ impl Device {
     pub fn request(&self, route: &str) -> Option<&RequestSender> {
         self.requests.get(route)
     }
+
+    // TODO: An API to build a device using data extracted from a database.
+    /*/// Builds a new [`Device`] from [`DeviceData`].
+    #[must_use]
+    #[inline]
+    pub fn builds_from_device_data(device_data: &DeviceData) -> Self {
+        todo!();
+    }*/
 }
 
 /// A collection of [`Device`]s.
