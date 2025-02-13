@@ -24,6 +24,9 @@ impl Controller {
    }
 }
 
+// Useful for databases
+Controller::from_devices(Discovery, devices)
+
 // Configure a controller
 let controller = Controller::new(Discovery)
 .block_actions_with_hazards(&[Hazard])
