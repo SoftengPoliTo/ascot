@@ -121,10 +121,10 @@ impl Device {
     }
 
     // TODO: An API to build a device using data extracted from a database.
-    /*/// Builds a new [`Device`] from [`DeviceData`].
+    /*/// Builds a new [`Device`] from [`NetworkInformation`] and [`Description`].
     #[must_use]
     #[inline]
-    pub fn builds_from_device_data(device_data: &DeviceData) -> Self {
+    pub fn builds_from_device_data(network_interface: NetworkInformation, description: Description) -> Self {
         todo!();
     }*/
 }
