@@ -99,6 +99,9 @@ impl DeviceInfo {
 pub struct DeviceData {
     /// Device kind.
     pub kind: DeviceKind,
+    /// Device product identifier, better known as product ID.
+    #[serde(rename = "product ID")]
+    pub product_id: Option<alloc::borrow::Cow<'static, str>>,
     /// Device environment.
     pub environment: DeviceEnvironment,
     /// Device main route.
@@ -120,9 +123,19 @@ impl DeviceData {
     ) -> Self {
         Self {
             kind,
+            product_id: None,
             environment,
             main_route: main_route.into(),
             route_configs,
         }
     }
+
+    /// Adds a device product identifier, better known as product ID.
+    #[must_use]
+    #[inline]
+    pub fn product_id(mut self, product_id: impl Into<alloc::borrow::Cow<'static, str>>) -> Self {
+        self.product_id = Some(product_id.into());
+        self
+    }
+}
 }
