@@ -59,7 +59,7 @@ macro_rules! set_implementation {
 
         impl<V, const N: usize> $impl<V, N>
         where
-            V: Clone + Copy + Eq + Hash,
+            V: Clone + Eq + Hash,
         {
             #[doc = concat!("Creates a [`", stringify!($impl), "`].")]
             #[must_use]
@@ -114,22 +114,6 @@ macro_rules! set_implementation {
             #[inline]
             pub fn iter(&self) -> IndexSetIter<'_, V> {
                 self.0.iter()
-            }
-
-            #[doc = concat!("Initializes [`", stringify!($impl), "`] with a list of elements.")]
-            #[inline]
-            pub fn init_with_elements(input_elements: &[V]) -> Self {
-                let mut elements = Self::new();
-                for element in input_elements.iter() {
-                    elements.add(*element);
-                }
-                elements
-            }
-
-            #[doc = concat!("Merges all elements from another [`", stringify!($impl), "`] into this one.")]
-            #[inline]
-            pub fn merge(&mut self, element: &Self) {
-                self.0 = self.0.union(&element.0).copied().collect();
             }
         }
     };
