@@ -63,6 +63,9 @@ impl<const C: usize, const R: usize, const E: usize, const CF: usize> DeviceInfo
 pub struct DeviceData<const H: usize, const I: usize, const N: usize> {
     /// Device kind.
     pub kind: DeviceKind,
+    /// Device product identifier, better known as product ID.
+    #[serde(rename = "product ID")]
+    pub product_id: Option<&'static str>,
     /// Device environment.
     pub environment: DeviceEnvironment,
     /// Device main route.
@@ -83,9 +86,17 @@ impl<const H: usize, const I: usize, const N: usize> DeviceData<H, I, N> {
     ) -> Self {
         Self {
             kind,
+            product_id: None,
             environment,
             main_route,
             route_configs,
         }
+    }
+
+    /// Adds a device product identifier, better known as product ID.
+    #[must_use]
+    pub const fn product_id(mut self, product_id: &'static str) -> Self {
+        self.product_id = Some(product_id);
+        self
     }
 }
