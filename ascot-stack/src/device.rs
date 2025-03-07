@@ -100,3 +100,120 @@ impl<const H: usize, const I: usize, const N: usize> DeviceData<H, I, N> {
         self
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use serde_json::{json, Value};
+
+    use crate::hazards::{Hazard, Hazards};
+    use crate::parameters::Parameters;
+    use crate::route::{Route, RouteConfigs};
+    use crate::serialize;
+
+    use super::{DeviceData, DeviceEnvironment, DeviceKind};
+
+    const PRODUCT_ID: &str = "00000018283";
+
+    fn create_route_configs() -> RouteConfigs<2, 2, 4> {
+        let light_on_route = Route::put("/on")
+            .description("Turn light on.")
+            .with_hazards(Hazards::<2>::new().insert(Hazard::ElectricEnergyConsumption));
+
+        let light_off_route = Route::put("/off")
+            .description("Turn light off.")
+            .with_hazards(Hazards::<2>::new().insert(Hazard::LogEnergyConsumption));
+
+        let toggle_route = Route::get("/toggle")
+            .description("Toggle a light.")
+            .with_hazards(
+                Hazards::<2>::new()
+                    .insert(Hazard::FireHazard)
+                    .insert(Hazard::ElectricEnergyConsumption),
+            )
+            .with_parameters(Parameters::<2>::new().rangeu64("brightness", (0, 20, 1)));
+
+        RouteConfigs::new()
+            .insert(light_on_route.serialize_data())
+            .insert(light_off_route.serialize_data())
+            .insert(toggle_route.serialize_data())
+    }
+
+    fn expected_json(product_id: &Value) -> Value {
+        json!(
+            {
+                "kind": "Light",
+                "product ID": product_id,
+                "environment": "Os",
+                "main route": "light/",
+                "route_configs":[
+                    {
+                        "name": "/on",
+                        "description": "Turn light on.",
+                        "REST kind": "Put",
+                        "hazards": [
+                            "ElectricEnergyConsumption"
+                        ],
+                        "response kind": "Ok"
+                    },
+                    {
+                        "name": "/off",
+                        "description": "Turn light off.",
+                        "REST kind": "Put",
+                        "hazards": [
+                            "LogEnergyConsumption"
+                        ],
+                        "response kind": "Ok"
+                    },
+                    {
+                        "name": "/toggle",
+                        "description": "Toggle a light.",
+                        "REST kind": "Get",
+                        "hazards": [
+                            "FireHazard",
+                            "ElectricEnergyConsumption"
+                        ],
+                        "parameters": {
+                            "brightness": {
+                                "RangeU64": {
+                                    "default":0,
+                                    "max":20,
+                                    "min":0,
+                                    "step":1
+                                }
+                            }
+                        },
+                        "response kind": "Ok"
+                    }
+                ]
+            }
+        )
+    }
+
+    #[test]
+    fn test_device_data() {
+        let route_configs = create_route_configs();
+
+        assert_eq!(
+            serialize(DeviceData::new(
+                DeviceKind::Light,
+                DeviceEnvironment::Os,
+                "light/",
+                route_configs.clone(),
+            )),
+            expected_json(&json!(null))
+        );
+
+        assert_eq!(
+            serialize(
+                DeviceData::new(
+                    DeviceKind::Light,
+                    DeviceEnvironment::Os,
+                    "light/",
+                    route_configs.clone(),
+                )
+                .product_id(PRODUCT_ID)
+            ),
+            expected_json(&json!(PRODUCT_ID))
+        );
+    }
+}
