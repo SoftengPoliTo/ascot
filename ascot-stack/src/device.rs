@@ -117,19 +117,18 @@ mod tests {
     fn create_route_configs() -> RouteConfigs<2, 2, 4> {
         let light_on_route = Route::put("/on")
             .description("Turn light on.")
-            .with_hazards(Hazards::<2>::new().insert(Hazard::ElectricEnergyConsumption));
+            .with_hazards(Hazards::one(Hazard::ElectricEnergyConsumption));
 
         let light_off_route = Route::put("/off")
             .description("Turn light off.")
-            .with_hazards(Hazards::<2>::new().insert(Hazard::LogEnergyConsumption));
+            .with_hazards(Hazards::one(Hazard::LogEnergyConsumption));
 
         let toggle_route = Route::get("/toggle")
             .description("Toggle a light.")
-            .with_hazards(
-                Hazards::<2>::new()
-                    .insert(Hazard::FireHazard)
-                    .insert(Hazard::ElectricEnergyConsumption),
-            )
+            .with_hazards(Hazards::two((
+                Hazard::FireHazard,
+                Hazard::ElectricEnergyConsumption,
+            )))
             .with_parameters(Parameters::<2>::new().rangeu64("brightness", (0, 20, 1)));
 
         RouteConfigs::new()
@@ -191,14 +190,12 @@ mod tests {
 
     #[test]
     fn test_device_data() {
-        let route_configs = create_route_configs();
-
         assert_eq!(
             serialize(DeviceData::new(
                 DeviceKind::Light,
                 DeviceEnvironment::Os,
                 "light/",
-                route_configs.clone(),
+                create_route_configs(),
             )),
             expected_json(&json!(null))
         );
@@ -209,7 +206,7 @@ mod tests {
                     DeviceKind::Light,
                     DeviceEnvironment::Os,
                     "light/",
-                    route_configs.clone(),
+                    create_route_configs(),
                 )
                 .product_id(PRODUCT_ID)
             ),
