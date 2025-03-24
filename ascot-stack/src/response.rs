@@ -1,6 +1,6 @@
 use ascot::actions::ActionError;
 
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
 use crate::device::DeviceInfo;
 use crate::string::String;
@@ -10,7 +10,7 @@ pub use ascot::response::{OkResponse, ResponseKind, SerialResponse};
 /// Informative response.
 ///
 /// This response provides economy and energy information of a device.
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize)]
 pub struct InfoResponse<const C: usize, const R: usize, const E: usize, const CF: usize> {
     #[serde(flatten)]
     data: DeviceInfo<C, R, E, CF>,
@@ -28,7 +28,7 @@ impl<const C: usize, const R: usize, const E: usize, const CF: usize> InfoRespon
 /// the execution of an action.
 ///
 /// It describes the kind of error, the cause, and optional information.
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize)]
 pub struct ErrorResponse<const N: usize> {
     /// Action error type.
     pub error: ActionError,
@@ -114,7 +114,7 @@ impl<const N: usize> ErrorResponse<N> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{deserialize, serialize};
+    use crate::serialize;
 
     use ascot::actions::ActionError;
 

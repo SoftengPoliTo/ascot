@@ -72,8 +72,3 @@ pub use utils::{collections, string};
 pub(crate) fn serialize<T: serde::Serialize>(value: T) -> serde_json::Value {
     serde_json::to_value(value).unwrap()
 }
-
-#[cfg(test)]
-pub(crate) fn deserialize<T: serde::de::DeserializeOwned>(value: serde_json::Value) -> T {
-    serde_json::from_value(value).unwrap()
-}

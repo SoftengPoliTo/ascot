@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
 use crate::economy::Economy;
 use crate::energy::Energy;
@@ -7,7 +7,7 @@ use crate::route::RouteConfigs;
 pub use ascot::device::{DeviceEnvironment, DeviceKind};
 
 /// Device information.
-#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Clone, Serialize)]
 pub struct DeviceInfo<const C: usize, const R: usize, const E: usize, const CF: usize> {
     /// Economy information.
     #[serde(skip_serializing_if = "Economy::is_empty")]
