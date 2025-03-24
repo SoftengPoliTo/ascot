@@ -4,6 +4,16 @@ use heapless::{FnvIndexSet, IndexSetIter};
 
 use serde::{Deserialize, Serialize};
 
+// Create a structure which is a `set` abstraction.
+//
+// Inputs:
+//
+// - Structure's name
+// - Types of structure's values
+// - Function parameter name of the single value which initializes
+//   the structure
+// - Function parameter name of the tuple of values which initializes
+//   the structure.
 macro_rules! create_set {
     ($name:ident, $ty:ty, $arg:tt, $args:tt) => {
         #[doc = concat!("A fixed-length sequence of [`", stringify!($ty), "`].")]
@@ -224,10 +234,5 @@ set_implementation!(Set);
 // Serial set implementation.
 set_implementation!(SerialSet);
 
-// Output set implementation.
-set_implementation!(OutputSet);
-
 // Convert from a set into a serial collection.
 from_set!(SerialSet);
-// Convert from a set into an output set.
-from_set!(OutputSet);
