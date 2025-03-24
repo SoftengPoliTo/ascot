@@ -26,7 +26,7 @@ mod tests {
         assert_eq!(
             serialize(Hazards::two((Hazard::AirPoisoning, Hazard::Asphyxia,))),
             json!(["AirPoisoning", "Asphyxia",])
-        )
+        );
     }
 
     #[test]
@@ -38,7 +38,7 @@ mod tests {
                 Hazard::AudioVideoDisplay,
             ))),
             json!(["AirPoisoning", "Asphyxia", "AudioVideoDisplay",])
-        )
+        );
     }
 
     #[test]
@@ -56,7 +56,7 @@ mod tests {
                 "AudioVideoDisplay",
                 "AudioVideoRecordAndStore",
             ])
-        )
+        );
     }
 
     #[test]
@@ -76,7 +76,7 @@ mod tests {
                 "AudioVideoRecordAndStore",
                 "ElectricEnergyConsumption",
             ])
-        )
+        );
     }
 
     #[test]
@@ -98,7 +98,7 @@ mod tests {
                 "ElectricEnergyConsumption",
                 "Explosion",
             ])
-        )
+        );
     }
 
     #[test]
@@ -122,7 +122,7 @@ mod tests {
                 "Explosion",
                 "FireHazard",
             ])
-        )
+        );
     }
 
     #[test]
@@ -148,6 +148,6 @@ mod tests {
                 "FireHazard",
                 "GasConsumption"
             ])
-        )
+        );
     }
 }
