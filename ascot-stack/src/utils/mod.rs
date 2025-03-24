@@ -9,5 +9,6 @@ pub mod string;
 /// All supported collections.
 pub mod collections {
     pub use super::maps::{Map, OutputMap, SerialMap};
+    pub(crate) use super::sets::create_set;
     pub use super::sets::{OutputSet, SerialSet, Set};
 }
