@@ -114,11 +114,12 @@ impl<const N: usize> ErrorResponse<N> {
 
 #[cfg(test)]
 mod tests {
+    use ascot::actions::ActionError;
+    use serde_json::json;
+
     use crate::serialize;
 
-    use ascot::actions::ActionError;
-
-    use super::{ErrorResponse, String};
+    use super::ErrorResponse;
 
     const STRING_SIZE: usize = 32;
 
@@ -130,12 +131,12 @@ mod tests {
         );
 
         assert_eq!(
-            deserialize::<ErrorResponse<STRING_SIZE>>(serialize(error)),
-            ErrorResponse {
-                error: ActionError::InvalidData,
-                description: String::infallible("Invalid data error description"),
-                info: None,
-            }
+            serialize(error),
+            json!({
+                "description": "Invalid data error description",
+                "error": "Invalid Data",
+                "info": null
+            })
         );
     }
 }

@@ -2,14 +2,11 @@ use serde::Serialize;
 
 use crate::collections::create_set;
 
-use crate::collections::OutputSet;
-
 pub use ascot::economy::{Cost, CostTimespan, Roi};
 
 create_set!(Costs, Cost, cost, costs);
 
-/// A collection of [`Roi`]s.
-pub type Rois<const R: usize> = OutputSet<Roi, R>;
+create_set!(Rois, Roi, roi, rois);
 
 /// Economy data for a device.
 #[derive(Debug, PartialEq, Clone, Serialize)]
