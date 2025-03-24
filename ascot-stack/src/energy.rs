@@ -1,17 +1,25 @@
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
-use crate::collections::OutputSet;
+use crate::collections::create_set;
 
 pub use ascot::energy::{CarbonFootprint, EnergyClass, EnergyEfficiency, WaterUseEfficiency};
 
-/// A collection of [`EnergyEfficiency`]s.
-pub type EnergyEfficiencies<const E: usize> = OutputSet<EnergyEfficiency, E>;
+create_set!(
+    EnergyEfficiencies,
+    EnergyEfficiency,
+    energy_efficiency,
+    energy_efficiencies
+);
 
-/// A collection of [`CarbonFootprints`]s.
-pub type CarbonFootprints<const CF: usize> = OutputSet<CarbonFootprint, CF>;
+create_set!(
+    CarbonFootprints,
+    CarbonFootprint,
+    carbon_footprint,
+    carbon_footprints
+);
 
 /// Energy information of a device.
-#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Clone, Serialize)]
 pub struct Energy<const E: usize, const CF: usize> {
     /// Energy efficiencies.
     #[serde(rename = "energy-efficiencies")]
