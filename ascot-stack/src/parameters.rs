@@ -217,9 +217,11 @@ impl<const N: usize> Parameters<N> {
 
 #[cfg(test)]
 mod tests {
+    use serde_json::json;
+
     use crate::serialize;
 
-    use super::{ParameterKind, Parameters, SerialMap};
+    use super::Parameters;
 
     #[test]
     fn test_parameters() {
@@ -237,36 +239,61 @@ mod tests {
             // removed.
             .u16("u16", 0);
 
-        let parameters_data = SerialMap::<&'static str, ParameterKind, 16>::new()
-            .insert("bool", ParameterKind::Bool { default: true })
-            .insert("u8", ParameterKind::U8 { default: 0 })
-            .insert("u16", ParameterKind::U16 { default: 0 })
-            .insert("u32", ParameterKind::U32 { default: 0 })
-            .insert("u64", ParameterKind::U64 { default: 0 })
-            .insert("f32", ParameterKind::F32 { default: 0. })
-            .insert("f64", ParameterKind::F64 { default: 0. })
-            .insert(
-                "rangeu64",
-                ParameterKind::RangeU64 {
-                    min: 0,
-                    max: 20,
-                    step: 1,
-                    default: 5,
-                },
-            )
-            .insert(
-                "rangef64",
-                ParameterKind::RangeF64 {
-                    min: 0.,
-                    max: 20.,
-                    step: 0.1,
-                    default: 5.,
-                },
-            );
-
         assert_eq!(
             serialize(parameters.serialize_data()),
-            serialize(parameters_data),
+            json!({
+                "bool": {
+                    "Bool": {
+                        "default": true
+                    }
+                },
+                "f32": {
+                    "F32": {
+                        "default": 0.0
+                    }
+                },
+                "f64": {
+                    "F64": {
+                        "default": 0.0
+                    }
+                },
+                "rangef64": {
+                    "RangeF64": {
+                        "default": 5.0,
+                        "max": 20.0,
+                        "min": 0.0,
+                        "step": 0.1
+                    }
+                },
+                "rangeu64": {
+                    "RangeU64": {
+                        "default": 5,
+                        "max": 20,
+                        "min": 0,
+                        "step": 1
+                    }
+                },
+                "u16": {
+                    "U16": {
+                        "default": 0
+                    }
+                },
+                "u32": {
+                    "U32": {
+                        "default": 0
+                    }
+                },
+                "u64": {
+                    "U64": {
+                        "default": 0
+                    }
+                },
+                "u8": {
+                    "U8": {
+                        "default": 0
+                    }
+                }
+            })
         );
     }
 }
