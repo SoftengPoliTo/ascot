@@ -11,7 +11,7 @@ use crate::parameters::{Parameters, ParametersData};
 pub use ascot::route::RestKind;
 
 /// Route data.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct RouteData<const H: usize, const P: usize> {
     /// Name.
     name: &'static str,
@@ -43,7 +43,7 @@ impl<const H: usize, const P: usize> RouteData<H, P> {
 }
 
 /// A server route configuration.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct RouteConfig<const H: usize, const P: usize> {
     /// Route.
     #[serde(flatten)]
@@ -312,12 +312,11 @@ mod tests {
             serialize(
                 Route::get("/route")
                     .description("A GET route")
-                    .with_hazards(
-                        Hazards::<4>::new()
-                            .insert(Hazard::FireHazard)
-                            .insert(Hazard::AirPoisoning)
-                            .insert(Hazard::Explosion)
-                    )
+                    .with_hazards(Hazards::three((
+                        Hazard::FireHazard,
+                        Hazard::AirPoisoning,
+                        Hazard::Explosion
+                    )))
                     .serialize_data()
             ),
             json!({
@@ -414,12 +413,11 @@ mod tests {
             serialize(
                 Route::get("/route")
                     .description("A GET route")
-                    .with_hazards(
-                        Hazards::<4>::new()
-                            .insert(Hazard::FireHazard)
-                            .insert(Hazard::AirPoisoning)
-                            .insert(Hazard::Explosion)
-                    )
+                    .with_hazards(Hazards::three((
+                        Hazard::FireHazard,
+                        Hazard::AirPoisoning,
+                        Hazard::Explosion
+                    )))
                     .with_parameters(
                         Parameters::<4>::new()
                             .rangeu64_with_default("rangeu64", (0, 20, 1), 5)
