@@ -11,7 +11,7 @@ use crate::parameters::{Parameters, ParametersData};
 pub use ascot::route::RestKind;
 
 /// Route data.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Serialize)]
 pub struct RouteData<const H: usize, const P: usize> {
     /// Name.
     name: &'static str,
@@ -43,7 +43,7 @@ impl<const H: usize, const P: usize> RouteData<H, P> {
 }
 
 /// A server route configuration.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Serialize)]
 pub struct RouteConfig<const H: usize, const P: usize> {
     /// Route.
     #[serde(flatten)]
