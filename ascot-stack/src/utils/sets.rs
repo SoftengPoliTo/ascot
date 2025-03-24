@@ -7,11 +7,12 @@ use serde::{Deserialize, Serialize};
 macro_rules! create_set {
     ($name:ident, $ty:ty, $arg:tt, $args:tt) => {
         #[doc = concat!("A fixed-length sequence of [`", stringify!($ty), "`].")]
-        #[derive(Debug, Clone, serde::Serialize)]
+        #[derive(Debug, Clone, PartialEq, serde::Serialize)]
         pub struct $name<const N: usize>(heapless::FnvIndexSet<$ty, N>);
 
         impl<const N: usize> $name<N> {
             #[doc = concat!("Checks whether [`", stringify!($name), "`] is empty.")]
+            #[must_use]
             #[inline]
             pub fn is_empty(&self) -> bool {
                 self.0.is_empty()

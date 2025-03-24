@@ -1,17 +1,18 @@
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
+
+use crate::collections::create_set;
 
 use crate::collections::OutputSet;
 
 pub use ascot::economy::{Cost, CostTimespan, Roi};
 
-/// A collection of [`Cost`]s.
-pub type Costs<const C: usize> = OutputSet<Cost, C>;
+create_set!(Costs, Cost, cost, costs);
 
 /// A collection of [`Roi`]s.
 pub type Rois<const R: usize> = OutputSet<Roi, R>;
 
 /// Economy data for a device.
-#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Clone, Serialize)]
 pub struct Economy<const C: usize, const R: usize> {
     /// Costs.
     #[serde(skip_serializing_if = "Option::is_none")]
