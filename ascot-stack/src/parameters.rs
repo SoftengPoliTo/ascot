@@ -1,6 +1,6 @@
-use serde::{Deserialize, Serialize};
+use heapless::FnvIndexMap;
 
-use crate::collections::{Map, SerialMap};
+use serde::{Deserialize, Serialize};
 
 /// All supported kinds of route input parameters.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
@@ -74,26 +74,91 @@ pub enum ParameterKind {
 }
 
 /// A map of serializable [`Parameters`] data.
-pub type ParametersData<const N: usize> = SerialMap<&'static str, ParameterKind, N>;
+#[derive(Debug, Clone, Serialize)]
+pub struct ParametersData<const N: usize>(FnvIndexMap<&'static str, ParameterKind, N>);
+
+impl<const N: usize> ParametersData<N> {
+    /// Checks whether [`ParametersData`] is empty.
+    #[must_use]
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+}
+
+impl<const N: usize> From<Parameters<N>> for ParametersData<N> {
+    fn from(parameters: Parameters<N>) -> Self {
+        Self(parameters.0)
+    }
+}
 
 /// Route input parameters.
 #[derive(Debug, Clone)]
-pub struct Parameters<const N: usize>(Map<&'static str, ParameterKind, N>);
+pub struct Parameters<const N: usize>(FnvIndexMap<&'static str, ParameterKind, N>);
 
-impl<const N: usize> Default for Parameters<N> {
-    fn default() -> Self {
+impl Parameters<2> {
+    /// Creates [`Parameters`] with one [`ParameterKind`].
+    #[inline]
+    #[must_use]
+    pub fn one() -> Self {
+        Self::new()
+    }
+
+    /// Creates [`Parameters`] with two [`ParameterKind`]s.
+    #[inline]
+    #[must_use]
+    pub fn two() -> Self {
+        Self::new()
+    }
+}
+
+impl Parameters<4> {
+    /// Creates [`Parameters`] with three [`ParameterKind`]s.
+    #[inline]
+    #[must_use]
+    pub fn three() -> Self {
+        Self::new()
+    }
+
+    /// Creates [`Parameters`] with four [`ParameterKind`]s.
+    #[inline]
+    #[must_use]
+    pub fn four() -> Self {
+        Self::new()
+    }
+}
+
+impl Parameters<8> {
+    /// Creates [`Parameters`] with five [`ParameterKind`].
+    #[inline]
+    #[must_use]
+    pub fn five() -> Self {
+        Self::new()
+    }
+
+    /// Creates [`Parameters`] with six [`ParameterKind`]s.
+    #[inline]
+    #[must_use]
+    pub fn six() -> Self {
+        Self::new()
+    }
+
+    /// Creates [`Parameters`] with seven [`ParameterKind`]s.
+    #[inline]
+    #[must_use]
+    pub fn seven() -> Self {
+        Self::new()
+    }
+
+    /// Creates [`Parameters`] with eight [`ParameterKind`]s.
+    #[inline]
+    #[must_use]
+    pub fn eight() -> Self {
         Self::new()
     }
 }
 
 impl<const N: usize> Parameters<N> {
-    /// Creates a [`Parameters`].
-    #[must_use]
-    #[inline]
-    pub fn new() -> Self {
-        Self(Map::new())
-    }
-
     /// Adds a [`bool`] parameter.
     #[must_use]
     #[inline]
@@ -203,15 +268,16 @@ impl<const N: usize> Parameters<N> {
     #[must_use]
     #[inline]
     pub fn serialize_data(self) -> ParametersData<N> {
-        let mut data = ParametersData::new();
-        for (key, value) in &self.0 {
-            data.add(key, *value);
-        }
-        data
+        ParametersData::from(self)
     }
 
-    fn create_parameter(self, name: &'static str, parameter_kind: ParameterKind) -> Self {
-        Self(self.0.insert(name, parameter_kind))
+    pub(crate) const fn new() -> Self {
+        Self(FnvIndexMap::new())
+    }
+
+    fn create_parameter(mut self, name: &'static str, parameter_kind: ParameterKind) -> Self {
+        let _ = self.0.insert(name, parameter_kind);
+        self
     }
 }
 
@@ -225,7 +291,7 @@ mod tests {
 
     #[test]
     fn test_numeric_parameters() {
-        let parameters = Parameters::<8>::new()
+        let parameters = Parameters::eight()
             .bool("bool", true)
             .u8("u8", 0)
             .u16("u16", 0)
@@ -281,7 +347,7 @@ mod tests {
 
     #[test]
     fn test_range_parameters() {
-        let parameters = Parameters::<2>::new()
+        let parameters = Parameters::two()
             .rangeu64_with_default("rangeu64", (0, 20, 1), 5)
             .rangef64_with_default("rangef64", (0., 20., 0.1), 5.);
 
