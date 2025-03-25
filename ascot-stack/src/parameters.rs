@@ -224,8 +224,8 @@ mod tests {
     use super::Parameters;
 
     #[test]
-    fn test_parameters() {
-        let parameters = Parameters::<16>::new()
+    fn test_numeric_parameters() {
+        let parameters = Parameters::<8>::new()
             .bool("bool", true)
             .u8("u8", 0)
             .u16("u16", 0)
@@ -233,8 +233,6 @@ mod tests {
             .u64("u64", 0)
             .f32("f32", 0.)
             .f64("f64", 0.)
-            .rangeu64_with_default("rangeu64", (0, 20, 1), 5)
-            .rangef64_with_default("rangef64", (0., 20., 0.1), 5.)
             // Adds a duplicate to see whether that value is maintained or
             // removed.
             .u16("u16", 0);
@@ -257,22 +255,6 @@ mod tests {
                         "default": 0.0
                     }
                 },
-                "rangef64": {
-                    "RangeF64": {
-                        "default": 5.0,
-                        "max": 20.0,
-                        "min": 0.0,
-                        "step": 0.1
-                    }
-                },
-                "rangeu64": {
-                    "RangeU64": {
-                        "default": 5,
-                        "max": 20,
-                        "min": 0,
-                        "step": 1
-                    }
-                },
                 "u16": {
                     "U16": {
                         "default": 0
@@ -291,6 +273,35 @@ mod tests {
                 "u8": {
                     "U8": {
                         "default": 0
+                    }
+                }
+            })
+        );
+    }
+
+    #[test]
+    fn test_range_parameters() {
+        let parameters = Parameters::<2>::new()
+            .rangeu64_with_default("rangeu64", (0, 20, 1), 5)
+            .rangef64_with_default("rangef64", (0., 20., 0.1), 5.);
+
+        assert_eq!(
+            serialize(parameters.serialize_data()),
+            json!({
+                "rangef64": {
+                    "RangeF64": {
+                        "default": 5.0,
+                        "max": 20.0,
+                        "min": 0.0,
+                        "step": 0.1
+                    }
+                },
+                "rangeu64": {
+                    "RangeU64": {
+                        "default": 5,
+                        "max": 20,
+                        "min": 0,
+                        "step": 1
                     }
                 }
             })
