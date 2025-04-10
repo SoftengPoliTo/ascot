@@ -1,7 +1,7 @@
 #[cfg(feature = "alloc")]
 use alloc::string::String;
 
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Serialize};
 
 #[cfg(feature = "alloc")]
 use crate::actions::ActionError;
@@ -10,7 +10,8 @@ use crate::actions::ActionError;
 use crate::device::DeviceInfo;
 
 /// Action response kinds.
-#[derive(Debug, Clone, Copy, Default, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Serialize)]
+#[cfg_attr(feature = "deserialize", derive(serde::Deserialize))]
 pub enum ResponseKind {
     /// A short message to notify a receiver that an action has terminated
     /// correctly.
@@ -42,7 +43,8 @@ impl core::fmt::Display for ResponseKind {
 
 /// An `Ok` response sends a boolean to notify a receiver that a device action
 /// has terminated correctly.
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize)]
+#[cfg_attr(feature = "deserialize", derive(serde::Deserialize))]
 pub struct OkResponse {
     action_terminated_correctly: bool,
 }
@@ -61,7 +63,8 @@ impl OkResponse {
 /// Serial response.
 ///
 /// This response provides more detailed information about an action.
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize)]
+#[cfg_attr(feature = "deserialize", derive(serde::Deserialize))]
 #[serde(bound = "T: Serialize + DeserializeOwned")]
 pub struct SerialResponse<T: DeserializeOwned> {
     #[serde(flatten)]
@@ -80,7 +83,7 @@ impl<T: Serialize + DeserializeOwned> SerialResponse<T> {
 ///
 /// This response provides economy and energy information of a device.
 #[cfg(feature = "alloc")]
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, serde::Deserialize)]
 pub struct InfoResponse {
     #[serde(flatten)]
     data: DeviceInfo,
@@ -100,7 +103,7 @@ impl InfoResponse {
 ///
 /// It describes the kind of error, the cause, and optional information.
 #[cfg(feature = "alloc")]
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, serde::Deserialize)]
 pub struct ErrorResponse {
     /// Action error type.
     pub error: ActionError,
@@ -169,9 +172,7 @@ impl ErrorResponse {
 
 #[cfg(test)]
 mod tests {
-    use crate::{deserialize, serialize};
-
-    use super::{Deserialize, OkResponse, SerialResponse, Serialize};
+    use serde::{Deserialize, Serialize};
 
     #[cfg(feature = "alloc")]
     use super::{ActionError, DeviceInfo, ErrorResponse, InfoResponse, String};
@@ -181,20 +182,24 @@ mod tests {
         value: u32,
     }
 
+    #[cfg(feature = "deserialize")]
     #[test]
     fn test_ok_response() {
         assert_eq!(
-            deserialize::<OkResponse>(serialize(OkResponse::ok())),
-            OkResponse {
+            crate::deserialize::<super::OkResponse>(crate::serialize(super::OkResponse::ok())),
+            super::OkResponse {
                 action_terminated_correctly: true,
             }
         );
     }
 
+    #[cfg(feature = "deserialize")]
     #[test]
     fn test_serial_response() {
         assert_eq!(
-            deserialize::<Serial>(serialize(SerialResponse::new(Serial { value: 42 }))),
+            crate::deserialize::<Serial>(crate::serialize(super::SerialResponse::new(Serial {
+                value: 42
+            }))),
             Serial { value: 42 },
         );
     }
@@ -207,7 +212,7 @@ mod tests {
         );
 
         assert_eq!(
-            deserialize::<DeviceInfo>(serialize(InfoResponse::new(
+            crate::deserialize::<DeviceInfo>(crate::serialize(InfoResponse::new(
                 DeviceInfo::empty().add_energy(energy)
             ))),
             DeviceInfo {
@@ -234,7 +239,7 @@ mod tests {
         );
 
         assert_eq!(
-            deserialize::<ErrorResponse>(serialize(error)),
+            crate::deserialize::<ErrorResponse>(crate::serialize(error)),
             ErrorResponse {
                 error: ActionError::InvalidData,
                 description: String::from("Invalid data error description"),

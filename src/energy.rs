@@ -1,7 +1,8 @@
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
 /// Energy efficiency class.
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, Serialize)]
+#[cfg_attr(feature = "deserialize", derive(serde::Deserialize))]
 pub enum EnergyClass {
     /// A+++
     #[serde(rename = "A+++")]
@@ -56,7 +57,8 @@ const fn decimal_percentage(percentage: i8) -> f64 {
 }
 
 /// Energy efficiency.
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, Serialize)]
+#[cfg_attr(feature = "deserialize", derive(serde::Deserialize))]
 pub struct EnergyEfficiency {
     /// Energy efficiency savings or consumes for the relevant [`EnergyClass`].
     pub percentage: i8,
@@ -113,7 +115,8 @@ impl EnergyEfficiency {
 pub type EnergyEfficiencies = crate::collections::OutputSet<EnergyEfficiency>;
 
 /// Carbon footprint.
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, Serialize)]
+#[cfg_attr(feature = "deserialize", derive(serde::Deserialize))]
 pub struct CarbonFootprint {
     /// The percentage of greenhouse gases added or removed from the atmosphere
     /// for the relevant [`EnergyClass`].
@@ -174,7 +177,8 @@ pub type CarbonFootprints = crate::collections::OutputSet<CarbonFootprint>;
 ///
 /// Metrics taken from:
 /// <https://www.frontiersin.org/journals/plant-science/articles/10.3389/fpls.2019.00103/full>
-#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Clone, Copy, Serialize)]
+#[cfg_attr(feature = "deserialize", derive(serde::Deserialize))]
 pub struct WaterUseEfficiency {
     /// Gross Primary Productivity (GPP).
     ///
@@ -251,7 +255,7 @@ impl WaterUseEfficiency {
 
 /// Energy information of a device.
 #[cfg(feature = "alloc")]
-#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Clone, Serialize, serde::Deserialize)]
 pub struct Energy {
     /// Energy efficiencies.
     #[serde(rename = "energy-efficiencies")]
