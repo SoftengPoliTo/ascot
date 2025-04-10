@@ -1,12 +1,13 @@
 use alloc::borrow::Cow;
 use alloc::string::String;
 
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
 use crate::collections::{Map, OutputMap};
 
 /// All supported kinds of route input parameters.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
+#[cfg_attr(feature = "deserialize", derive(serde::Deserialize))]
 pub enum ParameterKind {
     /// A [`bool`] value.
     Bool {

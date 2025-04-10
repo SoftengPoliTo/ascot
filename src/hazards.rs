@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
 /// All [`Hazard`]s.
 pub const ALL_HAZARDS: &[Hazard] = &[
@@ -29,7 +29,8 @@ pub const ALL_HAZARDS: &[Hazard] = &[
 ];
 
 /// All possible hazards for a device action.
-#[derive(Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Serialize)]
+#[cfg_attr(feature = "deserialize", derive(serde::Deserialize))]
 pub enum Hazard {
     /// The execution may release toxic gases.
     AirPoisoning,
@@ -310,7 +311,8 @@ pub struct HazardData {
 pub const ALL_CATEGORIES: &[Category] = &[Category::Safety, Category::Privacy, Category::Financial];
 
 /// Hazard categories.
-#[derive(Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Serialize)]
+#[cfg_attr(feature = "deserialize", derive(serde::Deserialize))]
 pub enum Category {
     /// Category which includes all financial-related hazards.
     Financial,
@@ -393,9 +395,9 @@ impl Category {
 
 #[cfg(test)]
 mod tests {
-    use crate::{deserialize, serialize};
+    use crate::serialize;
 
-    use super::{Category, Hazard, ALL_CATEGORIES, ALL_HAZARDS};
+    use super::{Hazard, ALL_HAZARDS};
 
     #[test]
     fn test_hazard() {
@@ -418,15 +420,20 @@ mod tests {
 
                 )
             );
-            assert_eq!(deserialize::<Hazard>(serialize(hazard)), *hazard);
+            #[cfg(feature = "deserialize")]
+            assert_eq!(crate::deserialize::<Hazard>(serialize(hazard)), *hazard);
         }
     }
 
+    #[cfg(feature = "deserialize")]
     #[test]
     fn test_category() {
         // Compare all categories.
-        for category in ALL_CATEGORIES {
-            assert_eq!(deserialize::<Category>(serialize(category)), *category);
+        for category in super::ALL_CATEGORIES {
+            assert_eq!(
+                crate::deserialize::<super::Category>(serialize(category)),
+                *category
+            );
         }
     }
 }

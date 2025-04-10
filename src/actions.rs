@@ -1,7 +1,8 @@
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
 /// All possible errors which might led a device action to fail.
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize)]
+#[cfg_attr(feature = "deserialize", derive(serde::Deserialize))]
 pub enum ActionError {
     /// Action data is not correct because invalid or malformed.
     #[serde(rename = "Invalid Data")]
