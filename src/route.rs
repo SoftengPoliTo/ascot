@@ -1,7 +1,8 @@
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
 /// `REST` requests kind.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize)]
+#[cfg_attr(feature = "deserialize", derive(serde::Deserialize))]
 pub enum RestKind {
     /// `GET` request.
     Get,
@@ -29,13 +30,15 @@ impl core::fmt::Display for RestKind {
 mod internal_route {
     use alloc::borrow::Cow;
 
+    use serde::Deserialize;
+
     use crate::hazards::{Hazard, Hazards};
     use crate::parameters::{Parameters, ParametersData};
     use crate::response::ResponseKind;
 
     use crate::collections::{OutputSet, Set};
 
-    use super::{Deserialize, RestKind, Serialize};
+    use super::{RestKind, Serialize};
 
     /// Route data.
     #[derive(Debug, Clone, Serialize, Deserialize)]

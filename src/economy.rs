@@ -1,9 +1,10 @@
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
 use crate::energy::EnergyClass;
 
 /// Timespan for a cost computation.
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, Serialize)]
+#[cfg_attr(feature = "deserialize", derive(serde::Deserialize))]
 pub enum CostTimespan {
     /// Week
     Week,
@@ -30,7 +31,8 @@ impl core::fmt::Display for CostTimespan {
 }
 
 /// A device cost in terms of expenses/savings.
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, Serialize)]
+#[cfg_attr(feature = "deserialize", derive(serde::Deserialize))]
 pub struct Cost {
     /// Amount of money in USD currency.
     #[serde(rename = "usd")]
@@ -71,7 +73,8 @@ impl Cost {
 pub type Costs = crate::collections::OutputSet<Cost>;
 
 /// Return on investments (ROI).
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, Serialize)]
+#[cfg_attr(feature = "deserialize", derive(serde::Deserialize))]
 pub struct Roi {
     /// Years timespan to calculate the ROI.
     pub years: u8,
@@ -120,7 +123,7 @@ pub type Rois = crate::collections::OutputSet<Roi>;
 
 /// Economy data for a device.
 #[cfg(feature = "alloc")]
-#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Clone, Serialize, serde::Deserialize)]
 pub struct Economy {
     /// Costs.
     #[serde(skip_serializing_if = "Option::is_none")]
