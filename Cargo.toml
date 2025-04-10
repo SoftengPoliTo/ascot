@@ -23,4 +23,5 @@ serde_json.features = ["alloc"]
 [features]
 # Preserve_order feature is mandatory and necessary for indexmap.
 alloc = ["indexmap/serde", "serde_json/preserve_order"]
-default = ["alloc"]
+deserialize = []
+default = ["alloc", "deserialize"]
