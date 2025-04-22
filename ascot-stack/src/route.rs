@@ -98,10 +98,10 @@ pub struct Route<const H: usize, const P: usize> {
     rest_kind: RestKind,
     // Description.
     description: Option<&'static str>,
-    // Input route parameters.
-    parameters: Parameters<P>,
     // Hazards.
     hazards: Hazards<H>,
+    // Input route parameters.
+    parameters: Parameters<P>,
 }
 
 impl<const H: usize, const P: usize> PartialEq for Route<H, P> {
@@ -116,8 +116,6 @@ impl<const H: usize, const P: usize> Eq for Route<H, P> {}
 impl<const H: usize, const P: usize> Hash for Route<H, P> {
     fn hash<Ha: Hasher>(&self, state: &mut Ha) {
         self.route.hash(state);
-        self.rest_kind.hash(state);
-        self.description.hash(state);
     }
 }
 
@@ -151,8 +149,8 @@ impl Route<2, 2> {
             route,
             rest_kind,
             description: None,
-            parameters: Parameters::new(),
-            hazards: Hazards::new(),
+            parameters: Parameters::two(),
+            hazards: Hazards::<2>::new(),
         }
     }
 }
@@ -366,7 +364,7 @@ mod tests {
                 Route::get("/route")
                     .description("A GET route")
                     .with_parameters(
-                        Parameters::<4>::new()
+                        Parameters::two()
                             .rangeu64_with_default("rangeu64", (0, 20, 1), 5)
                             .rangef64("rangef64", (0., 20., 0.1))
                     )
@@ -419,7 +417,7 @@ mod tests {
                         Hazard::Explosion
                     )))
                     .with_parameters(
-                        Parameters::<4>::new()
+                        Parameters::two()
                             .rangeu64_with_default("rangeu64", (0, 20, 1), 5)
                             .rangef64("rangef64", (0., 20., 0.1))
                     )

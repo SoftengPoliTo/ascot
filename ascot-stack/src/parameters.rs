@@ -271,7 +271,7 @@ impl<const N: usize> Parameters<N> {
         ParametersData::from(self)
     }
 
-    pub(crate) const fn new() -> Self {
+    const fn new() -> Self {
         Self(FnvIndexMap::new())
     }
 
