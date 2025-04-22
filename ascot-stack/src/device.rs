@@ -129,7 +129,7 @@ mod tests {
                 Hazard::FireHazard,
                 Hazard::ElectricEnergyConsumption,
             )))
-            .with_parameters(Parameters::<2>::new().rangeu64("brightness", (0, 20, 1)));
+            .with_parameters(Parameters::one().rangeu64("brightness", (0, 20, 1)));
 
         RouteConfigs::new()
             .insert(light_on_route.serialize_data())
