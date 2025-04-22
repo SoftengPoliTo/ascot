@@ -73,6 +73,111 @@ pub enum ParameterKind {
     },
 }
 
+impl ParameterKind {
+    /// Adds a [`bool`] parameter.
+    #[must_use]
+    #[inline]
+    pub fn bool(self, name: &'static str, default: bool) -> Self {
+        self.create_parameter(name, ParameterKind::Bool { default })
+    }
+
+    /// Adds an [`u8`] parameter.
+    #[must_use]
+    #[inline]
+    pub fn u8(self, name: &'static str, default: u8) -> Self {
+        self.create_parameter(name, ParameterKind::U8 { default })
+    }
+
+    /// Adds an [`u16`] parameter.
+    #[must_use]
+    #[inline]
+    pub fn u16(self, name: &'static str, default: u16) -> Self {
+        self.create_parameter(name, ParameterKind::U16 { default })
+    }
+
+    /// Adds an [`u32`] parameter.
+    #[must_use]
+    #[inline]
+    pub fn u32(self, name: &'static str, default: u32) -> Self {
+        self.create_parameter(name, ParameterKind::U32 { default })
+    }
+
+    /// Adds an [`u64`] parameter.
+    #[must_use]
+    #[inline]
+    pub fn u64(self, name: &'static str, default: u64) -> Self {
+        self.create_parameter(name, ParameterKind::U64 { default })
+    }
+
+    /// Adds a [`f32`] parameter.
+    #[must_use]
+    #[inline]
+    pub fn f32(self, name: &'static str, default: f32) -> Self {
+        self.create_parameter(name, ParameterKind::F32 { default })
+    }
+
+    /// Adds a [`f64`] parameter.
+    #[must_use]
+    #[inline]
+    pub fn f64(self, name: &'static str, default: f64) -> Self {
+        self.create_parameter(name, ParameterKind::F64 { default })
+    }
+
+    /// Adds an [`u64`] range without a default value.
+    #[must_use]
+    #[inline]
+    pub fn rangeu64(self, name: &'static str, range: (u64, u64, u64)) -> Self {
+        self.rangeu64_with_default(name, range, 0)
+    }
+
+    /// Adds an [`u64`] range with a default value.
+    #[must_use]
+    #[inline]
+    pub fn rangeu64_with_default(
+        self,
+        name: &'static str,
+        range: (u64, u64, u64),
+        default: u64,
+    ) -> Self {
+        self.create_parameter(
+            name,
+            ParameterKind::RangeU64 {
+                min: range.0,
+                max: range.1,
+                step: range.2,
+                default,
+            },
+        )
+    }
+
+    /// Adds a [`f64`] range without a default value.
+    #[must_use]
+    #[inline]
+    pub fn rangef64(self, name: &'static str, range: (f64, f64, f64)) -> Self {
+        self.rangef64_with_default(name, range, 0.0)
+    }
+
+    /// Adds a [`f64`] range with a default value.
+    #[must_use]
+    #[inline]
+    pub fn rangef64_with_default(
+        self,
+        name: &'static str,
+        range: (f64, f64, f64),
+        default: f64,
+    ) -> Self {
+        self.create_parameter(
+            name,
+            ParameterKind::RangeF64 {
+                min: range.0,
+                max: range.1,
+                step: range.2,
+                default,
+            },
+        )
+    }
+}
+
 /// A map of serializable [`Parameters`] data.
 #[derive(Debug, Clone, Serialize)]
 pub struct ParametersData<const N: usize>(FnvIndexMap<&'static str, ParameterKind, N>);
@@ -100,8 +205,10 @@ impl Parameters<2> {
     /// Creates [`Parameters`] with one [`ParameterKind`].
     #[inline]
     #[must_use]
-    pub fn one() -> Self {
-        Self::new()
+    pub fn one(first: (&'static str, ParameterKind)) -> Self {
+        let mut v = Self::new();
+        v.0.insert(first.0, first.1);
+        v
     }
 
     /// Creates [`Parameters`] with two [`ParameterKind`]s.
