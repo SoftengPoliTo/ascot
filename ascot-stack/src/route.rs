@@ -10,9 +10,9 @@ use crate::parameters::{Parameters, ParametersData};
 
 pub use ascot::route::RestKind;
 
-/// Route data.
+/// A route configuration.
 #[derive(Debug, Clone, Serialize)]
-pub struct RouteData<const H: usize, const P: usize> {
+pub struct RouteConfig<const H: usize, const P: usize> {
     /// Name.
     name: &'static str,
     /// Description.
@@ -23,31 +23,6 @@ pub struct RouteData<const H: usize, const P: usize> {
     /// Input parameters associated with a route..
     #[serde(skip_serializing_if = "ParametersData::is_empty")]
     parameters: ParametersData<P>,
-}
-
-impl<const H: usize, const P: usize> PartialEq for RouteData<H, P> {
-    fn eq(&self, other: &Self) -> bool {
-        self.name.eq(other.name)
-    }
-}
-
-impl<const H: usize, const P: usize> RouteData<H, P> {
-    fn new(route: Route<H, P>) -> Self {
-        Self {
-            name: route.route,
-            description: route.description,
-            hazards: route.hazards,
-            parameters: route.parameters.serialize_data(),
-        }
-    }
-}
-
-/// A server route configuration.
-#[derive(Debug, Clone, Serialize)]
-pub struct RouteConfig<const H: usize, const P: usize> {
-    /// Route.
-    #[serde(flatten)]
-    data: RouteData<H, P>,
     /// **_REST_** kind..
     #[serde(rename = "REST kind")]
     rest_kind: RestKind,
@@ -58,7 +33,7 @@ pub struct RouteConfig<const H: usize, const P: usize> {
 
 impl<const H: usize, const P: usize> PartialEq for RouteConfig<H, P> {
     fn eq(&self, other: &Self) -> bool {
-        self.data.eq(&other.data) && self.rest_kind == other.rest_kind
+        self.name.eq(other.name) && self.rest_kind == other.rest_kind
     }
 }
 
@@ -67,7 +42,7 @@ impl<const H: usize, const P: usize> Eq for RouteConfig<H, P> {}
 
 impl<const H: usize, const P: usize> Hash for RouteConfig<H, P> {
     fn hash<Ha: Hasher>(&self, state: &mut Ha) {
-        self.data.name.hash(state);
+        self.name.hash(state);
         self.rest_kind.hash(state);
     }
 }
@@ -75,9 +50,12 @@ impl<const H: usize, const P: usize> Hash for RouteConfig<H, P> {
 impl<const H: usize, const P: usize> RouteConfig<H, P> {
     fn new(route: Route<H, P>) -> Self {
         Self {
+            name: route.route,
+            description: route.description,
+            hazards: route.hazards,
+            parameters: route.parameters.serialize_data(),
             rest_kind: route.rest_kind,
             response_kind: ResponseKind::default(),
-            data: RouteData::new(route),
         }
     }
 }
