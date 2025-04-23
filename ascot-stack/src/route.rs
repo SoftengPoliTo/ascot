@@ -68,7 +68,6 @@ pub type RouteConfigs<const H: usize, const P: usize, const N: usize> =
 ///
 /// It represents a specific `REST` API which runs a task on a remote device
 /// when invoked.
-#[derive(Debug)]
 pub struct Route<const H: usize, const P: usize> {
     // Route.
     route: &'static str,
