@@ -4,7 +4,7 @@ use ascot::response::ResponseKind;
 
 use serde::Serialize;
 
-use crate::collections::{SerialSet, Set};
+use crate::collections::SerialSet;
 use crate::hazards::Hazards;
 use crate::parameters::{Parameters, ParametersData};
 
@@ -229,12 +229,6 @@ impl<const H: usize, const P: usize> Route<H, P> {
         RouteConfig::new(self)
     }
 }
-
-/// A collection of [`Route`]s.
-///
-/// **For alignment reasons, it accepts only a power of two
-/// as number of elements.**
-pub type Routes<const H: usize, const P: usize, const N: usize> = Set<Route<H, P>, N>;
 
 #[cfg(test)]
 mod tests {
