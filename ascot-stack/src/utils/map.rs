@@ -9,7 +9,6 @@
 macro_rules! create_map {
     ($name:ident, ($key:ty, $value:ty), $arg:tt, $args:tt) => {
         #[doc = concat!("A fixed-length map of ([`", stringify!($name), "`]s.")]
-        #[derive(Debug, Clone, PartialEq, serde::Serialize)]
         pub struct $name<const N: usize>(heapless::FnvIndexMap<$key, $value, N>);
 
         impl<const N: usize> $name<N> {
