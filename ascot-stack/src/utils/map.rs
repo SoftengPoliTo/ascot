@@ -8,7 +8,7 @@
 // - Function argument name for a sequence of pairs values
 macro_rules! create_map {
     ($name:ident, ($key:ty, $value:ty), $arg:tt, $args:tt) => {
-        #[doc = concat!("A fixed-length map of ([`", stringify!($key), "`],[`", stringify!($value), "`]).")]
+        #[doc = concat!("A fixed-length map of ([`", stringify!($name), "`]s.")]
         #[derive(Debug, Clone, PartialEq, serde::Serialize)]
         pub struct $name<const N: usize>(heapless::FnvIndexMap<$key, $value, N>);
 
@@ -36,7 +36,7 @@ macro_rules! create_map {
             #[inline]
             #[must_use]
             pub fn one($arg: ($key, $value)) -> Self {
-                Self::new().insert($arg.0, $arg.1)
+                Self::new().insert($arg)
             }
 
             #[doc = concat!("Creates [`", stringify!($name), "`] with two ([`", stringify!($key), "`],[`", stringify!($value), "`]) pairs.")]

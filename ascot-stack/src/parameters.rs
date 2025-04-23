@@ -1,9 +1,11 @@
 use heapless::FnvIndexMap;
 
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
+
+use crate::collections::create_map;
 
 /// All supported kinds of route input parameters.
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize)]
 pub enum ParameterKind {
     /// A [`bool`] value.
     Bool {
@@ -73,108 +75,94 @@ pub enum ParameterKind {
     },
 }
 
+impl Eq for ParameterKind {}
+
 impl ParameterKind {
-    /// Adds a [`bool`] parameter.
+    /// Creates a [`bool`] parameter.
     #[must_use]
     #[inline]
-    pub fn bool(self, name: &'static str, default: bool) -> Self {
-        self.create_parameter(name, ParameterKind::Bool { default })
+    pub fn bool(default: bool) -> Self {
+        Self::Bool { default }
     }
 
-    /// Adds an [`u8`] parameter.
+    /// Creates an [`u8`] parameter.
     #[must_use]
     #[inline]
-    pub fn u8(self, name: &'static str, default: u8) -> Self {
-        self.create_parameter(name, ParameterKind::U8 { default })
+    pub fn u8(default: u8) -> Self {
+        Self::U8 { default }
     }
 
-    /// Adds an [`u16`] parameter.
+    /// Creates an [`u16`] parameter.
     #[must_use]
     #[inline]
-    pub fn u16(self, name: &'static str, default: u16) -> Self {
-        self.create_parameter(name, ParameterKind::U16 { default })
+    pub fn u16(default: u16) -> Self {
+        Self::U16 { default }
     }
 
-    /// Adds an [`u32`] parameter.
+    /// Creates an [`u32`] parameter.
     #[must_use]
     #[inline]
-    pub fn u32(self, name: &'static str, default: u32) -> Self {
-        self.create_parameter(name, ParameterKind::U32 { default })
+    pub fn u32(default: u32) -> Self {
+        Self::U32 { default }
     }
 
-    /// Adds an [`u64`] parameter.
+    /// Creates an [`u64`] parameter.
     #[must_use]
     #[inline]
-    pub fn u64(self, name: &'static str, default: u64) -> Self {
-        self.create_parameter(name, ParameterKind::U64 { default })
+    pub fn u64(default: u64) -> Self {
+        Self::U64 { default }
     }
 
-    /// Adds a [`f32`] parameter.
+    /// Creates a [`f32`] parameter.
     #[must_use]
     #[inline]
-    pub fn f32(self, name: &'static str, default: f32) -> Self {
-        self.create_parameter(name, ParameterKind::F32 { default })
+    pub fn f32(default: f32) -> Self {
+        Self::F32 { default }
     }
 
-    /// Adds a [`f64`] parameter.
+    /// Creates a [`f64`] parameter.
     #[must_use]
     #[inline]
-    pub fn f64(self, name: &'static str, default: f64) -> Self {
-        self.create_parameter(name, ParameterKind::F64 { default })
+    pub fn f64(default: f64) -> Self {
+        Self::F64 { default }
     }
 
-    /// Adds an [`u64`] range without a default value.
+    /// Creates an [`u64`] range without a default value.
     #[must_use]
     #[inline]
-    pub fn rangeu64(self, name: &'static str, range: (u64, u64, u64)) -> Self {
-        self.rangeu64_with_default(name, range, 0)
+    pub fn rangeu64(range: (u64, u64, u64)) -> Self {
+        Self::rangeu64_with_default(range, 0)
     }
 
-    /// Adds an [`u64`] range with a default value.
+    /// Creates an [`u64`] range with a default value.
     #[must_use]
     #[inline]
-    pub fn rangeu64_with_default(
-        self,
-        name: &'static str,
-        range: (u64, u64, u64),
-        default: u64,
-    ) -> Self {
-        self.create_parameter(
-            name,
-            ParameterKind::RangeU64 {
-                min: range.0,
-                max: range.1,
-                step: range.2,
-                default,
-            },
-        )
+    pub fn rangeu64_with_default(range: (u64, u64, u64), default: u64) -> Self {
+        Self::RangeU64 {
+            min: range.0,
+            max: range.1,
+            step: range.2,
+            default,
+        }
     }
 
-    /// Adds a [`f64`] range without a default value.
+    /// Creates a [`f64`] range without a default value.
     #[must_use]
     #[inline]
-    pub fn rangef64(self, name: &'static str, range: (f64, f64, f64)) -> Self {
-        self.rangef64_with_default(name, range, 0.0)
+    pub fn rangef64(range: (f64, f64, f64)) -> Self {
+        Self::rangef64_with_default(range, 0.0)
     }
 
-    /// Adds a [`f64`] range with a default value.
+    /// Creates a [`f64`] range with a default value.
     #[must_use]
     #[inline]
-    pub fn rangef64_with_default(
-        self,
-        name: &'static str,
-        range: (f64, f64, f64),
-        default: f64,
-    ) -> Self {
-        self.create_parameter(
-            name,
-            ParameterKind::RangeF64 {
-                min: range.0,
-                max: range.1,
-                step: range.2,
-                default,
-            },
-        )
+    pub fn rangef64_with_default(range: (f64, f64, f64), default: f64) -> Self {
+        Self::RangeF64 {
+            min: range.0,
+            max: range.1,
+            step: range.2,
+            default,
+        }
     }
 }
 
@@ -197,178 +185,14 @@ impl<const N: usize> From<Parameters<N>> for ParametersData<N> {
     }
 }
 
-/// Route input parameters.
-#[derive(Debug, Clone)]
-pub struct Parameters<const N: usize>(FnvIndexMap<&'static str, ParameterKind, N>);
-
-impl Parameters<2> {
-    /// Creates [`Parameters`] with one [`ParameterKind`].
-    #[inline]
-    #[must_use]
-    pub fn one(first: (&'static str, ParameterKind)) -> Self {
-        let mut v = Self::new();
-        v.0.insert(first.0, first.1);
-        v
-    }
-
-    /// Creates [`Parameters`] with two [`ParameterKind`]s.
-    #[inline]
-    #[must_use]
-    pub fn two() -> Self {
-        Self::new()
-    }
-}
-
-impl Parameters<4> {
-    /// Creates [`Parameters`] with three [`ParameterKind`]s.
-    #[inline]
-    #[must_use]
-    pub fn three() -> Self {
-        Self::new()
-    }
-
-    /// Creates [`Parameters`] with four [`ParameterKind`]s.
-    #[inline]
-    #[must_use]
-    pub fn four() -> Self {
-        Self::new()
-    }
-}
-
-impl Parameters<8> {
-    /// Creates [`Parameters`] with five [`ParameterKind`].
-    #[inline]
-    #[must_use]
-    pub fn five() -> Self {
-        Self::new()
-    }
-
-    /// Creates [`Parameters`] with six [`ParameterKind`]s.
-    #[inline]
-    #[must_use]
-    pub fn six() -> Self {
-        Self::new()
-    }
-
-    /// Creates [`Parameters`] with seven [`ParameterKind`]s.
-    #[inline]
-    #[must_use]
-    pub fn seven() -> Self {
-        Self::new()
-    }
-
-    /// Creates [`Parameters`] with eight [`ParameterKind`]s.
-    #[inline]
-    #[must_use]
-    pub fn eight() -> Self {
-        Self::new()
-    }
-}
+create_map!(
+    Parameters,
+    (&'static str, ParameterKind),
+    parameter,
+    parameters
+);
 
 impl<const N: usize> Parameters<N> {
-    /// Adds a [`bool`] parameter.
-    #[must_use]
-    #[inline]
-    pub fn bool(self, name: &'static str, default: bool) -> Self {
-        self.create_parameter(name, ParameterKind::Bool { default })
-    }
-
-    /// Adds an [`u8`] parameter.
-    #[must_use]
-    #[inline]
-    pub fn u8(self, name: &'static str, default: u8) -> Self {
-        self.create_parameter(name, ParameterKind::U8 { default })
-    }
-
-    /// Adds an [`u16`] parameter.
-    #[must_use]
-    #[inline]
-    pub fn u16(self, name: &'static str, default: u16) -> Self {
-        self.create_parameter(name, ParameterKind::U16 { default })
-    }
-
-    /// Adds an [`u32`] parameter.
-    #[must_use]
-    #[inline]
-    pub fn u32(self, name: &'static str, default: u32) -> Self {
-        self.create_parameter(name, ParameterKind::U32 { default })
-    }
-
-    /// Adds an [`u64`] parameter.
-    #[must_use]
-    #[inline]
-    pub fn u64(self, name: &'static str, default: u64) -> Self {
-        self.create_parameter(name, ParameterKind::U64 { default })
-    }
-
-    /// Adds a [`f32`] parameter.
-    #[must_use]
-    #[inline]
-    pub fn f32(self, name: &'static str, default: f32) -> Self {
-        self.create_parameter(name, ParameterKind::F32 { default })
-    }
-
-    /// Adds a [`f64`] parameter.
-    #[must_use]
-    #[inline]
-    pub fn f64(self, name: &'static str, default: f64) -> Self {
-        self.create_parameter(name, ParameterKind::F64 { default })
-    }
-
-    /// Adds an [`u64`] range without a default value.
-    #[must_use]
-    #[inline]
-    pub fn rangeu64(self, name: &'static str, range: (u64, u64, u64)) -> Self {
-        self.rangeu64_with_default(name, range, 0)
-    }
-
-    /// Adds an [`u64`] range with a default value.
-    #[must_use]
-    #[inline]
-    pub fn rangeu64_with_default(
-        self,
-        name: &'static str,
-        range: (u64, u64, u64),
-        default: u64,
-    ) -> Self {
-        self.create_parameter(
-            name,
-            ParameterKind::RangeU64 {
-                min: range.0,
-                max: range.1,
-                step: range.2,
-                default,
-            },
-        )
-    }
-
-    /// Adds a [`f64`] range without a default value.
-    #[must_use]
-    #[inline]
-    pub fn rangef64(self, name: &'static str, range: (f64, f64, f64)) -> Self {
-        self.rangef64_with_default(name, range, 0.0)
-    }
-
-    /// Adds a [`f64`] range with a default value.
-    #[must_use]
-    #[inline]
-    pub fn rangef64_with_default(
-        self,
-        name: &'static str,
-        range: (f64, f64, f64),
-        default: f64,
-    ) -> Self {
-        self.create_parameter(
-            name,
-            ParameterKind::RangeF64 {
-                min: range.0,
-                max: range.1,
-                step: range.2,
-                default,
-            },
-        )
-    }
-
     /// Serializes [`Parameters`] data.
     ///
     /// It consumes the data.
@@ -376,15 +200,6 @@ impl<const N: usize> Parameters<N> {
     #[inline]
     pub fn serialize_data(self) -> ParametersData<N> {
         ParametersData::from(self)
-    }
-
-    const fn new() -> Self {
-        Self(FnvIndexMap::new())
-    }
-
-    fn create_parameter(mut self, name: &'static str, parameter_kind: ParameterKind) -> Self {
-        let _ = self.0.insert(name, parameter_kind);
-        self
     }
 }
 
@@ -394,21 +209,22 @@ mod tests {
 
     use crate::serialize;
 
-    use super::Parameters;
+    use super::{ParameterKind, Parameters};
 
     #[test]
     fn test_numeric_parameters() {
-        let parameters = Parameters::eight()
-            .bool("bool", true)
-            .u8("u8", 0)
-            .u16("u16", 0)
-            .u32("u32", 0)
-            .u64("u64", 0)
-            .f32("f32", 0.)
-            .f64("f64", 0.)
+        let parameters = Parameters::eight((
+            ("bool", ParameterKind::bool(true)),
+            ("u8", ParameterKind::u8(0)),
+            ("u16", ParameterKind::u16(0)),
+            ("u32", ParameterKind::u32(0)),
+            ("u64", ParameterKind::u64(0)),
+            ("f32", ParameterKind::f32(0.)),
+            ("f64", ParameterKind::f64(0.)),
             // Adds a duplicate to see whether that value is maintained or
             // removed.
-            .u16("u16", 0);
+            ("u16", ParameterKind::u16(0)),
+        ));
 
         assert_eq!(
             serialize(parameters.serialize_data()),
@@ -454,9 +270,16 @@ mod tests {
 
     #[test]
     fn test_range_parameters() {
-        let parameters = Parameters::two()
-            .rangeu64_with_default("rangeu64", (0, 20, 1), 5)
-            .rangef64_with_default("rangef64", (0., 20., 0.1), 5.);
+        let parameters = Parameters::two((
+            (
+                "rangeu64",
+                ParameterKind::rangeu64_with_default((0, 20, 1), 5),
+            ),
+            (
+                "rangef64",
+                ParameterKind::rangef64_with_default((0., 20., 0.1), 5.),
+            ),
+        ));
 
         assert_eq!(
             serialize(parameters.serialize_data()),
