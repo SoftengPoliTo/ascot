@@ -149,8 +149,8 @@ impl Route<2, 2> {
             route,
             rest_kind,
             description: None,
-            parameters: Parameters::two(),
-            hazards: Hazards::<2>::new(),
+            parameters: Parameters::new(),
+            hazards: Hazards::new(),
         }
     }
 }
@@ -241,9 +241,11 @@ mod tests {
     use ascot::hazards::Hazard;
     use serde_json::json;
 
+    use crate::hazards::Hazards;
+    use crate::parameters::{ParameterKind, Parameters};
     use crate::serialize;
 
-    use super::{Hazards, Parameters, Route};
+    use super::Route;
 
     #[test]
     fn test_all_routes() {
@@ -363,11 +365,13 @@ mod tests {
             serialize(
                 Route::get("/route")
                     .description("A GET route")
-                    .with_parameters(
-                        Parameters::two()
-                            .rangeu64_with_default("rangeu64", (0, 20, 1), 5)
-                            .rangef64("rangef64", (0., 20., 0.1))
-                    )
+                    .with_parameters(Parameters::two((
+                        (
+                            "rangeu64",
+                            ParameterKind::rangeu64_with_default((0, 20, 1), 5)
+                        ),
+                        ("rangef64", ParameterKind::rangef64((0., 20., 0.1)))
+                    )))
                     .serialize_data()
             ),
             expected
@@ -416,11 +420,13 @@ mod tests {
                         Hazard::AirPoisoning,
                         Hazard::Explosion
                     )))
-                    .with_parameters(
-                        Parameters::two()
-                            .rangeu64_with_default("rangeu64", (0, 20, 1), 5)
-                            .rangef64("rangef64", (0., 20., 0.1))
-                    )
+                    .with_parameters(Parameters::two((
+                        (
+                            "rangeu64",
+                            ParameterKind::rangeu64_with_default((0, 20, 1), 5)
+                        ),
+                        ("rangef64", ParameterKind::rangef64((0., 20., 0.1)))
+                    )))
                     .serialize_data()
             ),
             expected

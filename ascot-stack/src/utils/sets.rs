@@ -4,19 +4,17 @@ use heapless::{FnvIndexSet, IndexSetIter};
 
 use serde::{Deserialize, Serialize};
 
-// Create a structure which is a `set` abstraction.
+// Creates a `set` abstraction structure.
 //
 // Inputs:
 //
-// - Structure's name
-// - Types of structure's values
-// - Function parameter name of the single value which initializes
-//   the structure
-// - Function parameter name of the tuple of values which initializes
-//   the structure.
+// - Structure name
+// - Types of values
+// - Function argument name for a single value
+// - Function argument name for a sequence of values
 macro_rules! create_set {
     ($name:ident, $ty:ty, $arg:tt, $args:tt) => {
-        #[doc = concat!("A fixed-length sequence of [`", stringify!($ty), "`].")]
+        #[doc = concat!("A fixed-length sequence of [`", stringify!($name), "`]s.")]
         #[derive(Debug, Clone, PartialEq, serde::Serialize)]
         pub struct $name<const N: usize>(heapless::FnvIndexSet<$ty, N>);
 
