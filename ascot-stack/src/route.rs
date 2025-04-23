@@ -37,7 +37,7 @@ impl<const H: usize, const P: usize> PartialEq for RouteConfig<H, P> {
     }
 }
 
-// Hazards and inputs prevent Eq trait to be derived.
+// Hazards and parameters prevent Eq trait to be derived.
 impl<const H: usize, const P: usize> Eq for RouteConfig<H, P> {}
 
 impl<const H: usize, const P: usize> Hash for RouteConfig<H, P> {
@@ -64,10 +64,10 @@ impl<const H: usize, const P: usize> RouteConfig<H, P> {
 pub type RouteConfigs<const H: usize, const P: usize, const N: usize> =
     SerialSet<RouteConfig<H, P>, N>;
 
-/// A server route.
+/// A route definition.
 ///
-/// It represents a specific `REST` API which, when invoked, runs a task on
-/// a remote device.
+/// It represents a specific `REST` API which runs a task on a remote device
+/// when invoked.
 #[derive(Debug)]
 pub struct Route<const H: usize, const P: usize> {
     // Route.
@@ -88,7 +88,7 @@ impl<const H: usize, const P: usize> PartialEq for Route<H, P> {
     }
 }
 
-// Hazards and inputs prevent Eq trait to be derived.
+// Hazards and parameters prevent `Eq` trait to be derived.
 impl<const H: usize, const P: usize> Eq for Route<H, P> {}
 
 impl<const H: usize, const P: usize> Hash for Route<H, P> {
