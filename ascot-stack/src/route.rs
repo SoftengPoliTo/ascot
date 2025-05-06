@@ -2,13 +2,95 @@ use core::hash::{Hash, Hasher};
 
 use ascot::response::ResponseKind;
 
-use serde::Serialize;
+use heapless::FnvIndexSet;
+
+use serde::{ser::SerializeSeq, Serialize, Serializer};
 
 use crate::collections::SerialSet;
 use crate::hazards::Hazards;
 use crate::parameters::{Parameters, ParametersData};
 
 pub use ascot::route::RestKind;
+
+const fn collection_size(n: usize) -> usize {
+    if n == 0 || n == 1 {
+        return 2;
+    }
+
+    let mut power = 1;
+    while power < n {
+        power *= 2;
+    }
+    power
+}
+
+macro_rules! create_route_configs {
+    (
+        $name:ident, [$($hazard:ident),*], [$($param:ident),*], [$($var:ident),*], [$($val:tt),*], $len:tt
+    ) => {
+        /// FIXME
+        pub struct $name<$(const $hazard: usize, const $param: usize,)*> {
+            // The bool value specifies if the route should be serialized (true) or not (false).
+            $($var: (bool, Route<$hazard, $param>),)*
+        }
+
+        impl<$(const $hazard: usize, const $param: usize,)*>
+            $name<$($hazard, $param,)*>
+        {
+            /// FIXME
+            #[must_use]
+            pub fn new(value: ($(Route<$hazard, $param>,)*)) -> Self {
+                let mut routes_counter = FnvIndexSet::<&'static str, { collection_size($len) }>::new();
+
+                Self {
+                    $(
+                        $var: {
+                            let to_serialize = routes_counter.insert(value.$val.route).map_or(false, |inserted| inserted);
+                            (to_serialize, value.$val)
+                        },
+                    )*
+                }
+            }
+        }
+
+        impl<$(const $hazard: usize, const $param: usize,)*> Serialize for $name<$($hazard, $param,)*>
+        {
+            fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+            where
+                S: Serializer,
+            {
+                let number_of_routes = 0 $(+ if self.$var.0 { 1 } else { 0 })*;
+
+                let mut seq = serializer.serialize_seq(Some(number_of_routes))?;
+
+                $(
+                    if self.$var.0 {
+                        seq.serialize_element(&self.$var.1)?;
+                    }
+                )*
+                seq.end()
+            }
+        }
+    };
+}
+
+create_route_configs!(
+    RouteConfigs2,
+    [H1, H2],
+    [K1, K2],
+    [first, second],
+    [0, 1],
+    2
+);
+
+create_route_configs!(
+    RouteConfigs3,
+    [H1, H2, H3],
+    [K1, K2, K3],
+    [first, second, third],
+    [0, 1, 2],
+    3
+);
 
 /// A route configuration.
 #[derive(Debug, Clone, Serialize)]
@@ -53,7 +135,7 @@ impl<const H: usize, const P: usize> RouteConfig<H, P> {
             name: route.route,
             description: route.description,
             hazards: route.hazards,
-            parameters: route.parameters.serialize_data(),
+            parameters: route.parameters_data,
             rest_kind: route.rest_kind,
             response_kind: ResponseKind::default(),
         }
@@ -68,6 +150,7 @@ pub type RouteConfigs<const H: usize, const P: usize, const N: usize> =
 ///
 /// It represents a specific `REST` API which runs a task on a remote device
 /// when invoked.
+#[derive(Serialize)]
 pub struct Route<const H: usize, const P: usize> {
     // Route.
     route: &'static str,
@@ -78,22 +161,7 @@ pub struct Route<const H: usize, const P: usize> {
     // Hazards.
     hazards: Hazards<H>,
     // Input route parameters.
-    parameters: Parameters<P>,
-}
-
-impl<const H: usize, const P: usize> PartialEq for Route<H, P> {
-    fn eq(&self, other: &Self) -> bool {
-        self.route == other.route && self.rest_kind == other.rest_kind
-    }
-}
-
-// Hazards and parameters prevent `Eq` trait to be derived.
-impl<const H: usize, const P: usize> Eq for Route<H, P> {}
-
-impl<const H: usize, const P: usize> Hash for Route<H, P> {
-    fn hash<Ha: Hasher>(&self, state: &mut Ha) {
-        self.route.hash(state);
-    }
+    parameters_data: ParametersData<P>,
 }
 
 impl Route<2, 2> {
@@ -126,7 +194,7 @@ impl Route<2, 2> {
             route,
             rest_kind,
             description: None,
-            parameters: Parameters::new(),
+            parameters_data: Parameters::new().serialize_data(),
             hazards: Hazards::new(),
         }
     }
@@ -155,7 +223,7 @@ impl<const H: usize, const P: usize> Route<H, P> {
             route: self.route,
             rest_kind: self.rest_kind,
             description: self.description,
-            parameters: self.parameters,
+            parameters_data: self.parameters_data,
             hazards,
         }
     }
@@ -168,7 +236,7 @@ impl<const H: usize, const P: usize> Route<H, P> {
             route: self.route,
             rest_kind: self.rest_kind,
             description: self.description,
-            parameters,
+            parameters_data: parameters.serialize_data(),
             hazards: self.hazards,
         }
     }
@@ -191,10 +259,10 @@ impl<const H: usize, const P: usize> Route<H, P> {
         &self.hazards
     }
 
-    /// Returns [`Parameters`].
+    /// Returns [`ParametersData`].
     #[must_use]
-    pub const fn parameters(&self) -> &Parameters<P> {
-        &self.parameters
+    pub const fn parameters(&self) -> &ParametersData<P> {
+        &self.parameters_data
     }
 
     /// Serializes [`Route`] data.
