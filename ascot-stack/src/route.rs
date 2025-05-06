@@ -160,7 +160,7 @@ pub struct Route<const H: usize, const P: usize> {
     description: Option<&'static str>,
     // Hazards.
     hazards: Hazards<H>,
-    // Input route parameters.
+    // Input route parameters data.
     parameters_data: ParametersData<P>,
 }
 
