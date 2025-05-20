@@ -148,28 +148,60 @@ impl Hazard {
         match self {
             Self::AirPoisoning => "The execution may release toxic gases.",
             Self::Asphyxia => "The execution may cause oxygen deficiency by gaseous substances.",
-            Self::AudioVideoDisplay => "The execution authorises an application to display a video with audio coming from a device.",
-            Self::AudioVideoRecordAndStore => "The execution authorises an application to record and save a video with audio coming from a device on persistent storage.",
-            Self::ElectricEnergyConsumption => "The execution enables a device which consumes electricity.",
+            Self::AudioVideoDisplay => {
+                "The execution authorises an application to display a video with audio coming from a device."
+            }
+            Self::AudioVideoRecordAndStore => {
+                "The execution authorises an application to record and save a video with audio coming from a device on persistent storage."
+            }
+            Self::ElectricEnergyConsumption => {
+                "The execution enables a device which consumes electricity."
+            }
             Self::Explosion => "The execution may cause an explosion.",
             Self::FireHazard => "The execution may cause fire.",
             Self::GasConsumption => "The execution enables a device which consumes gas.",
-            Self::LogEnergyConsumption => "The execution authorises an application to get and save information about a device's energy impact.",
-            Self::LogUsageTime => "The execution authorises an application to get and save information about a device's duration of use.",
-            Self::PaySubscriptionFee => "The execution authorises an application to use payment information and make a periodic payment.",
-            Self::PowerOutage => "The execution may cause an interruption in the supply of electricity.",
+            Self::LogEnergyConsumption => {
+                "The execution authorises an application to get and save information about a device's energy impact."
+            }
+            Self::LogUsageTime => {
+                "The execution authorises an application to get and save information about a device's duration of use."
+            }
+            Self::PaySubscriptionFee => {
+                "The execution authorises an application to use payment information and make a periodic payment."
+            }
+            Self::PowerOutage => {
+                "The execution may cause an interruption in the supply of electricity."
+            }
             Self::PowerSurge => "The execution may lead to exposure to high voltages.",
-            Self::RecordIssuedCommands => "The execution authorises an application to get and save user inputs.",
-            Self::RecordUserPreferences => "The execution authorises an application to get and save information about user's preferences.",
-            Self::SpendMoney => "The execution authorises an application to use payment information and make a payment transaction.",
+            Self::RecordIssuedCommands => {
+                "The execution authorises an application to get and save user inputs."
+            }
+            Self::RecordUserPreferences => {
+                "The execution authorises an application to get and save information about user's preferences."
+            }
+            Self::SpendMoney => {
+                "The execution authorises an application to use payment information and make a payment transaction."
+            }
             Self::SpoiledFood => "The execution may lead to rotten food.",
-            Self::TakeDeviceScreenshots => "The execution authorises an application to read and take screenshots from the display output.",
-            Self::TakePictures => "The execution authorises an application to use a camera and take photos.",
-            Self::UnauthorisedPhysicalAccess => "The execution disables a protection mechanism, therefore unauthorised individuals may physically access to the environment.",
-            Self::VideoDisplay => "The execution authorises an application to display a video coming from a device.",
-            Self::VideoRecordAndStore => "The execution authorises an application to record and save a video coming from a device on persistent storage.",
+            Self::TakeDeviceScreenshots => {
+                "The execution authorises an application to read and take screenshots from the display output."
+            }
+            Self::TakePictures => {
+                "The execution authorises an application to use a camera and take photos."
+            }
+            Self::UnauthorisedPhysicalAccess => {
+                "The execution disables a protection mechanism, therefore unauthorised individuals may physically access to the environment."
+            }
+            Self::VideoDisplay => {
+                "The execution authorises an application to display a video coming from a device."
+            }
+            Self::VideoRecordAndStore => {
+                "The execution authorises an application to record and save a video coming from a device on persistent storage."
+            }
             Self::WaterConsumption => "The execution enables a device which consumes water.",
-            Self::WaterFlooding => "The execution enables a device to water usage, which may lead to flood.",
+            Self::WaterFlooding => {
+                "The execution enables a device to water usage, which may lead to flood."
+            }
         }
     }
 
@@ -395,7 +427,7 @@ impl Category {
 mod tests {
     use crate::{deserialize, serialize};
 
-    use super::{Category, Hazard, ALL_CATEGORIES, ALL_HAZARDS};
+    use super::{ALL_CATEGORIES, ALL_HAZARDS, Category, Hazard};
 
     #[test]
     fn test_hazard() {

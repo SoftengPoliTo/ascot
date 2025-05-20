@@ -1,7 +1,7 @@
 #[cfg(feature = "alloc")]
 use alloc::string::String;
 
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 #[cfg(feature = "alloc")]
 use crate::actions::ActionError;

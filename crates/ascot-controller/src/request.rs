@@ -13,7 +13,7 @@ use ascot::response::ResponseKind;
 use ascot::route::{RestKind, RouteConfig, RouteConfigs};
 
 use crate::error::Error;
-use crate::parameters::{convert_to_parameter_value, Parameters};
+use crate::parameters::{Parameters, convert_to_parameter_value};
 use crate::response::{
     InfoResponseParser, OkResponseParser, Response, SerialResponseParser, StreamResponse,
 };
@@ -327,7 +327,7 @@ mod tests {
     use ascot::parameters::{ParameterKind, Parameters as AscotParameters, ParametersData};
     use ascot::route::{RestKind, Route, RouteConfig};
 
-    use crate::parameters::{parameter_error, Parameters};
+    use crate::parameters::{Parameters, parameter_error};
 
     use super::{Request, RequestData, ResponseKind};
 

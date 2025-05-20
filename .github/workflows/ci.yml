@@ -1,0 +1,159 @@
+name: ci
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+env:
+  RUST_PREVIOUS_VERSION: 1.86.0
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  # Enable consistent use of `RUST_PREVIOUS_VERSION` across different jobs
+  prepare-checks:
+    runs-on: ubuntu-latest
+
+    outputs:
+      rust-prev-version: ${{ env.RUST_PREVIOUS_VERSION }}
+
+    steps:
+      - name: Set rust-prev-version output
+        run: echo "rust-prev-version=${RUST_PREVIOUS_VERSION}" >> $GITHUB_OUTPUT
+
+################################## FORMAT AND LINTS LAYER ######################
+
+  clippy-rustfmt:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          components: clippy, rustfmt
+
+      - name: Run cargo clippy
+        run: cargo clippy --all-targets -- -D warnings
+
+      - name: Run rustfmt
+        run: cargo fmt --all -- --check --verbose
+
+################################## BUILD AND DOCS LAYER ########################
+
+  build:
+    needs: [clippy-rustfmt]
+
+    strategy:
+      matrix:
+        platform: [ubuntu-latest, macos-latest, windows-latest]
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+
+      - name: Build
+        run: cargo build --verbose
+
+  check-previous-version:
+    needs: [prepare-checks, clippy-rustfmt]
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        rust: [prev]
+        include:
+          - rust: prev
+            toolchain: ${{ needs.prepare-checks.outputs.rust-prev-version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust previous version
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ matrix.toolchain }}
+
+      - name: Run cargo check
+        run: cargo check --verbose
+
+  docs:
+    needs: [clippy-rustfmt]
+
+    strategy:
+      matrix:
+        platform: [ubuntu-latest, macos-latest, windows-latest]
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+
+      - name: Generate docs
+        run: cargo doc --verbose --no-deps
+
+################################## CODE COVERAGE LAYER ##################################
+
+  code-coverage:
+    needs: [build, check-previous-version, docs]
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+
+      - name: Install grcov
+        env:
+          GRCOV_BASE_URL: https://github.com/mozilla/grcov/releases
+          GRCOV_BINARY: grcov-x86_64-unknown-linux-musl.tar.bz2
+        run: |
+          LATEST_TAG=$(curl -sIL -o /dev/null -w '%{url_effective}' "$GRCOV_BASE_URL/latest" | grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+' | head -n1)
+          GRCOV_URL="$GRCOV_BASE_URL/download/$LATEST_TAG/$GRCOV_BINARY"
+          curl -L "$GRCOV_URL" | tar xj -C $HOME/.cargo/bin
+
+      - name: DEBUG
+        run: ls $HOME/.cargo/bin
+
+      - name: Install llvm-tools-preview
+        run: rustup component add llvm-tools-preview
+
+      - name: Run tests
+        env:
+          RUSTFLAGS: "-Cinstrument-coverage"
+          LLVM_PROFILE_FILE: "coverage-%p-%m.profraw"
+        run: cargo test --verbose
+
+      - name: Generate lcov report
+        run: |
+          grcov . --binary-path ./target/debug/ -s . -t lcov --branch \
+            --ignore-not-existing --ignore "/*" --ignore "../*" \
+            --ignore "ascot/*" -o lcov.info
+
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: lcov.info
+          token: ${{ secrets.CODECOV_TOKEN }}

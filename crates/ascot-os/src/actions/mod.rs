@@ -15,7 +15,7 @@ use ascot::parameters::{ParameterKind, ParametersData};
 use ascot::response::ResponseKind;
 use ascot::route::{RestKind, Route, RouteConfig};
 
-use axum::{handler::Handler, Router};
+use axum::{Router, handler::Handler};
 
 use tracing::{info, warn};
 
@@ -187,7 +187,7 @@ impl MandatoryAction<true> {
 mod tests {
     use ascot::parameters::Parameters;
 
-    use super::{build_get_route, Route};
+    use super::{Route, build_get_route};
 
     #[test]
     fn test_build_get_route() {

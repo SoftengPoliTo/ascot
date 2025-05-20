@@ -57,7 +57,7 @@ impl Wifi {
 
         let ip_info = wifi.wifi().sta_netif().get_ip_info()?;
 
-        info!("Wifi DHCP info: {:?}", ip_info);
+        info!("Wifi DHCP info: {ip_info:?}");
 
         Ok(Self {
             ip: ip_info.ip,

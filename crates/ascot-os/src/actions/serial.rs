@@ -10,9 +10,9 @@ use axum::{
     response::{IntoResponse, Response},
 };
 
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
-use super::{error::ErrorResponse, DeviceAction, MandatoryAction};
+use super::{DeviceAction, MandatoryAction, error::ErrorResponse};
 
 /// Serial response.
 ///

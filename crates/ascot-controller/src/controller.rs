@@ -244,7 +244,7 @@ mod tests {
     use ascot::hazards::{Hazard, Hazards};
     use ascot::response::{OkResponse, SerialResponse};
 
-    use serde::{de::DeserializeOwned, Serialize};
+    use serde::{Serialize, de::DeserializeOwned};
     use serde_json::json;
 
     use serial_test::serial;
@@ -257,9 +257,9 @@ mod tests {
 
     use crate::device::tests::{create_fridge, create_light, create_unknown};
     use crate::discovery::tests::configure_discovery;
-    use crate::tests::{check_function_with_device, Brightness};
+    use crate::tests::{Brightness, check_function_with_device};
 
-    use super::{sender_error, Controller, DeviceSender, RequestSender};
+    use super::{Controller, DeviceSender, RequestSender, sender_error};
 
     #[test]
     fn empty_controller() {

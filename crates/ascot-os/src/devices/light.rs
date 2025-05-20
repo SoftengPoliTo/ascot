@@ -177,11 +177,11 @@ mod tests {
 
     use crate::actions::error::ErrorResponse;
     use crate::actions::ok::{
-        mandatory_ok_stateful, mandatory_ok_stateless, ok_stateful, ok_stateless, OkResponse,
+        OkResponse, mandatory_ok_stateful, mandatory_ok_stateless, ok_stateful, ok_stateless,
     };
     use crate::actions::serial::{
-        mandatory_serial_stateful, mandatory_serial_stateless, serial_stateful, serial_stateless,
-        SerialResponse,
+        SerialResponse, mandatory_serial_stateful, mandatory_serial_stateless, serial_stateful,
+        serial_stateless,
     };
 
     use super::Light;

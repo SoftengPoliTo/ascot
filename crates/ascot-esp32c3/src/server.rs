@@ -1,5 +1,5 @@
-use esp_idf_svc::http::server::{Configuration, EspHttpServer};
 use esp_idf_svc::http::Method;
+use esp_idf_svc::http::server::{Configuration, EspHttpServer};
 use esp_idf_svc::io::Write;
 
 use ascot::route::RestKind;

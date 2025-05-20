@@ -12,7 +12,7 @@ use axum::{
 
 use serde::{Deserialize, Serialize};
 
-use super::{error::ErrorResponse, DeviceAction, MandatoryAction};
+use super::{DeviceAction, MandatoryAction, error::ErrorResponse};
 
 /// An `Ok` response sends a boolean to notify a receiver that a device action
 /// has terminated correctly.

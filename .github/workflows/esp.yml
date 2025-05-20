@@ -1,0 +1,93 @@
+name: esp
+
+on:
+  push:
+    branches: [ master ]
+    # TODO: Uncomment
+    # paths:
+    #   - 'crates/ascot-esp32c3/**'
+  pull_request:
+    branches: [ master ]
+    # TODO: Uncomment
+    # paths:
+    #   - 'crates/ascot-esp32c3/**'
+
+jobs:
+  rustfmt-clippy-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            git wget flex bison gperf python3 python3-pip python3-venv \
+            cmake ninja-build ccache libffi-dev libssl-dev \
+            dfu-util libusb-1.0-0 libudev-dev
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: nightly
+          components: rust-src, rustfmt, clippy
+
+      - name: Install Cargo subcommands
+        run: |
+          cargo install ldproxy
+
+      # - name: Install espup
+      #   env:
+      #     ESPUP_BASE_URL: https://github.com/esp-rs/espup/releases
+      #     ESPUP_BINARY: espup-x86_64-unknown-linux-gnu.zip
+      #   run: |
+      #     LATEST_TAG=$(curl -sIL -o /dev/null -w '%{url_effective}' "$ESPUP_BASE_URL/latest" | grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+' | head -n1)
+      #     ESPUP_URL="$ESPUP_BASE_URL/download/$LATEST_TAG/$ESPUP_BINARY"
+      #     curl -LO "$ESPUP_URL"
+      #     unzip "$ESPUP_BINARY" -d $HOME/.cargo/bin
+
+      # - name: Install ESP toolchain via espup
+      #   run: espup install
+
+      # - name: Export ESP environment to GITHUB_ENV
+      #   run: |
+      #     echo 'LIBCLANG_PATH=$HOME/.rustup/toolchains/esp/xtensa-esp32-elf-clang/esp-19.1.2_20250225/esp-clang/lib' >> $GITHUB_ENV
+      #     echo 'PATH=$HOME/.rustup/toolchains/esp/xtensa-esp-elf/esp-14.2.0_20240906/xtensa-esp-elf/bin:$PATH' >> $GITHUB_ENV
+      #     echo 'PATH=$HOME/riscv32-esp-elf-gdb/bin:$PATH' >> $GITHUB_ENV
+
+      # - name: Export ESP environment to GITHUB_ENV dynamically
+      #   run: |
+      #     set -a
+      #     source $HOME/export-esp.sh
+      #     set +a
+      #     env | grep -E '^(LIBCLANG_PATH|PATH)=' >> $GITHUB_ENV
+
+      # - name: Export ESP environment to GITHUB_ENV
+      #   run: |
+      #     echo "LIBCLANG_PATH=$HOME/.rustup/toolchains/esp/xtensa-esp32-elf-clang/esp-19.1.2_20250225/esp-clang/lib" >> $GITHUB_ENV
+      #     echo "PATH=$HOME/.rustup/toolchains/esp/xtensa-esp-elf/esp-14.2.0_20240906/xtensa-esp-elf/bin:$HOME/riscv32-esp-elf-gdb/bin:$PATH" >> $GITHUB_ENV
+      #
+
+      # - name: Run rustfmt
+      #   working-directory: crates/ascot-esp32c3
+      #   run: cargo fmt --all -- --check --verbose
+
+      # - name: Run cargo clippy
+      #   working-directory: crates/ascot-esp32c3
+      #   run: cargo clippy --all-targets -- -D warnings
+
+      - name: Build
+        working-directory: crates/ascot-esp32c3
+        run: cargo build --verbose
+
+      - name: Build light
+        working-directory: crates/ascot-esp32c3/examples/light
+        run: |
+          sed -e 's/your Wi-Fi SSID/ssid/' \
+              -e 's/your Wi-Fi password/password/' \
+              -e 's/your hostname/hostname/' \
+              -e 's/your discovery service/service/' \
+              cfg.toml.example > cfg.toml
+          cargo build --verbose

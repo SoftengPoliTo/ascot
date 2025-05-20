@@ -1,5 +1,7 @@
 # `ascot`
 
+[![Actions][actions badge]][actions]
+[![Codecov][codecov badge]][codecov]
 [![LICENSE][license badge]][license]
 
 This repository is organized as a Cargo workspace that includes several crates.
@@ -51,7 +53,11 @@ be built separately because it targets a specific architecture
 (`riscv32imc-esp-espidf`) and requires a different build process.
 
 <!-- Links -->
+[actions]: https://github.com/SoftengPoliTo/ascot/actions
+[codecov]: https://codecov.io/gh/SoftengPoliTo/ascot
 [license]: https://github.com/SoftengPoliTo/ascot/blob/master/LICENSE
 
 <!-- Badges -->
+[actions badge]: https://github.com/SoftengPoliTo/ascot/workflows/ci/badge.svg
+[codecov badge]: https://codecov.io/gh/SoftengPoliTo/ascot/branch/master/graph/badge.svg
 [license badge]: https://img.shields.io/badge/license-MIT-blue.svg
