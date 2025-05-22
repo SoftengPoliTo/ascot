@@ -66,8 +66,7 @@ impl Error {
     }
 
     fn format(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "Error: {}", self.kind)?;
-        write!(f, "Cause: {}", self.description)
+        write!(f, "{}: {}", self.kind, self.description)
     }
 }
 
@@ -98,12 +97,8 @@ mod tests {
 
     #[test]
     fn controller_error() {
-        let error = Error::new(ErrorKind::Discovery, "Discovery process failed.");
+        let error = Error::new(ErrorKind::Discovery, "Process failed.");
 
-        assert_eq!(
-            error.to_string(),
-            r"Error: Discovery
-Cause: Discovery process failed."
-        );
+        assert_eq!(error.to_string(), r"Discovery: Process failed.");
     }
 }
