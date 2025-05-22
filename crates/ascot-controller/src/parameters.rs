@@ -20,8 +20,6 @@ const fn str_type(parameter_kind: &ParameterKind) -> &'static str {
         ParameterKind::F32 { .. } => "f32",
         ParameterKind::F64 { .. } | ParameterKind::RangeF64 { .. } => "f64",
         ParameterKind::CharsSequence { .. } => "String",
-        // FIXME: Find a way to manage this variant.
-        ParameterKind::ByteStream => "Vec<u8>",
     }
 }
 
@@ -41,8 +39,6 @@ pub(crate) fn convert_to_parameter_value(parameter_kind: &ParameterKind) -> Opti
         ParameterKind::CharsSequence { default } => {
             Some(ParameterValue::String(default.to_string()))
         }
-        // FIXME: Find a way to manage this variant.
-        ParameterKind::ByteStream => None,
     }
 }
 
@@ -95,10 +91,7 @@ impl ParameterValue {
 
 /// Route input parameters.
 #[derive(Debug, Clone)]
-pub struct Parameters<'a> {
-    values: Map<&'a str, ParameterValue>,
-    files: Map<&'a str, Vec<u8>>,
-}
+pub struct Parameters<'a>(Map<&'a str, ParameterValue>);
 
 impl Default for Parameters<'_> {
     fn default() -> Self {
@@ -111,10 +104,7 @@ impl<'a> Parameters<'a> {
     #[must_use]
     #[inline]
     pub fn new() -> Self {
-        Self {
-            values: Map::new(),
-            files: Map::new(),
-        }
+        Self(Map::new())
     }
 
     /// Adds a [`bool`] value.
@@ -165,19 +155,12 @@ impl<'a> Parameters<'a> {
         self.add_value_parameter(name, ParameterValue::String(value))
     }
 
-    /// Adds a bytes stream input.
-    #[inline]
-    pub fn byte_stream(&mut self, name: &'a str, value: Vec<u8>) -> &mut Self {
-        self.files.add(name, value);
-        self
-    }
-
     pub(crate) fn get<'b>(&'b self, name: &'b str) -> Option<&'b ParameterValue> {
-        self.values.get(name)
+        self.0.get(name)
     }
 
     pub(crate) fn check_parameters(&self, parameters_data: &ParametersData) -> Result<(), Error> {
-        for (name, parameter_value) in &self.values {
+        for (name, parameter_value) in &self.0 {
             let Some(parameter_kind) = parameters_data.get(*name) else {
                 return Err(parameter_error(format!("`{name}` does not exist")));
             };
@@ -193,7 +176,7 @@ impl<'a> Parameters<'a> {
     }
 
     fn add_value_parameter(&mut self, name: &'a str, parameter_value: ParameterValue) -> &mut Self {
-        self.values.add(name, parameter_value);
+        self.0.add(name, parameter_value);
         self
     }
 }

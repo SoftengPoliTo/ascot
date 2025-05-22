@@ -11,13 +11,13 @@ pub mod serial;
 pub mod stream;
 
 use ascot::hazards::{Hazard, Hazards};
-use ascot::parameters::{ParameterKind, ParametersData};
+use ascot::parameters::ParametersData;
 use ascot::response::ResponseKind;
 use ascot::route::{RestKind, Route, RouteConfig};
 
 use axum::{handler::Handler, Router};
 
-use tracing::{info, warn};
+use tracing::info;
 
 #[rustfmt::skip]
 macro_rules! all_the_tuples {
@@ -46,11 +46,7 @@ pub(super) use all_the_tuples;
 
 fn build_get_route(route: &str, parameters: &ParametersData) -> String {
     let mut route = String::from(route);
-    for (name, parameter_kind) in parameters {
-        if matches!(parameter_kind, ParameterKind::ByteStream) {
-            warn!("A bytes stream is not accepted for `GET` requests, skip it");
-            continue;
-        }
+    for (name, _) in parameters {
         route.push_str(&format!("/{{{name}}}"));
     }
     info!("Build GET route: {}", route);

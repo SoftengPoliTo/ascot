@@ -83,10 +83,6 @@ pub enum ParameterKind {
         /// value.
         default: Cow<'static, str>,
     },
-    /// A byte stream input.
-    ///
-    /// This kind of input parameter can be used to send files to a receiver.
-    ByteStream,
 }
 
 /// A map of serializable and deserializable [`Parameters`] data.
@@ -229,13 +225,6 @@ impl Parameters {
         )
     }
 
-    /// Adds a bytes stream input.
-    #[must_use]
-    #[inline]
-    pub fn byte_stream(self, name: &'static str) -> Self {
-        self.create_parameter(name, ParameterKind::ByteStream)
-    }
-
     /// Serializes [`Parameters`] data.
     ///
     /// It consumes the data.
@@ -276,7 +265,6 @@ mod tests {
             .rangef64_with_default("rangef64", (0., 20., 0.1), 5.)
             .characters_sequence("greeting", "hello")
             .characters_sequence("greeting2", "hello".to_string())
-            .byte_stream("bytes_stream")
             // Adds a duplicate to see whether that value is maintained or
             // removed.
             .u16("u16", 0);
@@ -318,8 +306,7 @@ mod tests {
                 ParameterKind::CharsSequence {
                     default: "hello".into(),
                 },
-            )
-            .insert("bytes_stream".into(), ParameterKind::ByteStream);
+            );
 
         assert_eq!(
             deserialize::<ParametersData>(serialize(parameters.serialize_data())),
