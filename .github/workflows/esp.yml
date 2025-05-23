@@ -2,7 +2,7 @@ name: esp
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
     # TODO: uncomment paths
     # paths:
     #   - 'crates/ascot-esp32c3/Cargo.lock'
@@ -12,7 +12,7 @@ on:
     #   - 'crates/ascot-esp32c3/**/*.yml'
     #   - 'crates/ascot-esp32c3/**/*.toml'
   pull_request:
-    branches: [ master ]
+    branches: [master]
     types: [opened, synchronize]
     # TODO: uncomment paths
     # paths:
@@ -31,29 +31,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # - name: Install system dependencies
-      #   run: |
-      #     sudo apt-get update
-      #     sudo apt-get install -y \
-      #       flex bison gperf
-
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: nightly
           components: rustfmt, clippy
 
-      # - name: Install ldproxy
-      #   run: |
-      #     cargo install ldproxy
+      - name: Install ldproxy
+        run: |
+          cargo install ldproxy
 
-      # - name: Run rustfmt
-      #   working-directory: crates/ascot-esp32c3
-      #   run: cargo fmt --all -- --check --verbose
+      - name: Run rustfmt
+        working-directory: crates/ascot-esp32c3
+        run: cargo fmt --all -- --check --verbose
 
-      # - name: Run cargo clippy
-      #   working-directory: crates/ascot-esp32c3
-      #   run: cargo clippy --all-targets -- -D warnings
+      - name: Run cargo clippy
+        working-directory: crates/ascot-esp32c3
+        run: cargo clippy --all-targets -- -Dclippy::all -Dclippy::pedantic
 
       - name: Build
         working-directory: crates/ascot-esp32c3

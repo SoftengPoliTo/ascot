@@ -257,6 +257,7 @@ impl Request {
                 // TODO: Skip bytes stream
                 continue;
             };
+            // TODO: Consider returning `Option<String>`
             if let Err(e) = write!(route, "/{}", value.as_string()) {
                 error!("Error in adding a path to a route : {e}");
                 break;
@@ -291,6 +292,7 @@ impl Request {
                 };
                 value.as_string()
             };
+            // TODO: Consider returning `Option<String>`
             if let Err(e) = write!(route, "/{value}") {
                 error!("Error in adding a path to a route : {e}");
                 break;
