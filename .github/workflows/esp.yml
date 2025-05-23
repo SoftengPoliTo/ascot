@@ -24,8 +24,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            flex bison gperf \
-            cmake ninja-build libffi-dev libssl-dev
+            flex bison gperf
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
