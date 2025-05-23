@@ -30,10 +30,6 @@ axum.features = ["tokio", "http1", "http2", "json"]
 # Just for the TryStream trait.
 futures-core.version = "0.3"
 
-gethostname.version = "0.5"
-gethostname.default-features = false
-gethostname.optional = true
-
 if-addrs.version = "0.13"
 if-addrs.default-features = false
 if-addrs.optional = true
@@ -49,4 +45,4 @@ async-lock.default-features = false
 [features]
 default = ["mdns-sd-service"]
 
-mdns-sd-service = ["dep:mdns-sd", "dep:gethostname", "dep:if-addrs"]
+mdns-sd-service = ["dep:mdns-sd", "dep:if-addrs"]
