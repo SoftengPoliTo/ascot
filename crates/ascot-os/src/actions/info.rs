@@ -13,7 +13,7 @@ use axum::{
 
 use serde::{Deserialize, Serialize};
 
-use super::{error::ErrorResponse, DeviceAction};
+use super::{DeviceAction, error::ErrorResponse};
 
 /// Informative response.
 ///

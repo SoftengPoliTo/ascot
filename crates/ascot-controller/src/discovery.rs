@@ -7,7 +7,7 @@ use mdns_sd::{IfKind, ResolvedService, ServiceDaemon, ServiceEvent, ServiceInfo}
 
 use tracing::{info, warn};
 
-use crate::device::{build_device_address, Description, Device, Devices, NetworkInformation};
+use crate::device::{Description, Device, Devices, NetworkInformation, build_device_address};
 use crate::error::Error;
 use crate::request::create_requests;
 
@@ -299,7 +299,7 @@ pub(crate) mod tests {
     use serial_test::serial;
 
     use crate::tests::{
-        check_function_with_device, check_function_with_two_devices, compare_device_data, DOMAIN,
+        DOMAIN, check_function_with_device, check_function_with_two_devices, compare_device_data,
     };
 
     use super::Discovery;

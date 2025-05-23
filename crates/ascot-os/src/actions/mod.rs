@@ -15,9 +15,11 @@ use ascot::parameters::{ParameterKind, ParametersData};
 use ascot::response::ResponseKind;
 use ascot::route::{RestKind, Route, RouteConfig};
 
-use axum::{handler::Handler, Router};
+use axum::{Router, handler::Handler};
 
-use tracing::{info, warn};
+use tracing::{error, info, warn};
+
+use std::fmt::Write;
 
 #[rustfmt::skip]
 macro_rules! all_the_tuples {
@@ -51,7 +53,11 @@ fn build_get_route(route: &str, parameters: &ParametersData) -> String {
             warn!("A bytes stream is not accepted for `GET` requests, skip it");
             continue;
         }
-        route.push_str(&format!("/{{{name}}}"));
+        // TODO: Consider returning `Option<String>`
+        if let Err(e) = write!(route, "/{{{name}}}") {
+            error!("Error in adding a path to a route : {e}");
+            break;
+        }
     }
     info!("Build GET route: {}", route);
     route
@@ -187,7 +193,7 @@ impl MandatoryAction<true> {
 mod tests {
     use ascot::parameters::Parameters;
 
-    use super::{build_get_route, Route};
+    use super::{Route, build_get_route};
 
     #[test]
     fn test_build_get_route() {

@@ -13,7 +13,7 @@ use ascot::response::ResponseKind;
 use ascot::route::{RestKind, RouteConfig, RouteConfigs};
 
 use crate::error::Error;
-use crate::parameters::{convert_to_parameter_value, Parameters};
+use crate::parameters::{Parameters, convert_to_parameter_value};
 use crate::response::{
     InfoResponseParser, OkResponseParser, Response, SerialResponseParser, StreamResponse,
 };
@@ -257,6 +257,7 @@ impl Request {
                 // TODO: Skip bytes stream
                 continue;
             };
+            // TODO: Consider returning `Option<String>`
             if let Err(e) = write!(route, "/{}", value.as_string()) {
                 error!("Error in adding a path to a route : {e}");
                 break;
@@ -291,6 +292,7 @@ impl Request {
                 };
                 value.as_string()
             };
+            // TODO: Consider returning `Option<String>`
             if let Err(e) = write!(route, "/{value}") {
                 error!("Error in adding a path to a route : {e}");
                 break;
@@ -327,7 +329,7 @@ mod tests {
     use ascot::parameters::{ParameterKind, Parameters as AscotParameters, ParametersData};
     use ascot::route::{RestKind, Route, RouteConfig};
 
-    use crate::parameters::{parameter_error, Parameters};
+    use crate::parameters::{Parameters, parameter_error};
 
     use super::{Request, RequestData, ResponseKind};
 

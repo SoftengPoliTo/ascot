@@ -1,0 +1,29 @@
+name: semver-checks
+
+on:
+  # TODO: Remove on pull_request before merge
+  pull_request:
+    branches: [ master ]
+  schedule:
+    - cron: '0 21 * * TUE'
+  push:
+    tags:
+      - 'v*.*.*'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  semver-checks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: Check semantic versioning violations
+        uses: obi1kenobi/cargo-semver-checks-action@v2
+        with:
+          baseline-rev: 'master'
+          exclude: ascot-esp32c3

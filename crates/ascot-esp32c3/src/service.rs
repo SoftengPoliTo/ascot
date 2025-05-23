@@ -4,7 +4,7 @@ use edge_mdns::buf::VecBufAccess;
 use edge_mdns::domain::base::Ttl;
 use edge_mdns::host::{Service, ServiceAnswers};
 use edge_mdns::io::{self, DEFAULT_SOCKET};
-use edge_mdns::{host::Host, HostAnswersMdnsHandler};
+use edge_mdns::{HostAnswersMdnsHandler, host::Host};
 
 use edge_nal::UdpSplit;
 use edge_nal_std::Stack;
@@ -16,7 +16,7 @@ use esp_idf_svc::hal::task::block_on;
 
 use log::info;
 
-use rand::{thread_rng, RngCore};
+use rand::{RngCore, thread_rng};
 
 use crate::error::Result;
 

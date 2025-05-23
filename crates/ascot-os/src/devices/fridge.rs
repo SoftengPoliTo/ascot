@@ -176,8 +176,8 @@ mod tests {
 
     use crate::actions::error::ErrorResponse;
     use crate::actions::serial::{
-        mandatory_serial_stateful, mandatory_serial_stateless, serial_stateful, serial_stateless,
-        SerialResponse,
+        SerialResponse, mandatory_serial_stateful, mandatory_serial_stateless, serial_stateful,
+        serial_stateless,
     };
 
     use super::Fridge;

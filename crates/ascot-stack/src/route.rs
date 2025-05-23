@@ -93,6 +93,7 @@ pub type RouteConfigs<const H: usize, const P: usize, const N: usize> =
 #[derive(Debug)]
 pub struct Route<const H: usize, const P: usize> {
     // Route.
+    #[allow(clippy::struct_field_names)]
     route: &'static str,
     // REST kind.
     rest_kind: RestKind,

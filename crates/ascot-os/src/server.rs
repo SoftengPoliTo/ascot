@@ -1,7 +1,7 @@
 use std::future::Future;
 use std::net::Ipv4Addr;
 
-use axum::{response::Redirect, Router};
+use axum::{Router, response::Redirect};
 
 use tracing::info;
 

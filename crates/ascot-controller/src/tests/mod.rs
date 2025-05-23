@@ -8,8 +8,8 @@ use ascot::response::ResponseKind;
 use ascot::route::{RestKind, Route};
 
 use ascot_os::actions::error::ErrorResponse;
-use ascot_os::actions::ok::{mandatory_ok_stateless, OkResponse};
-use ascot_os::actions::serial::{serial_stateless, SerialResponse};
+use ascot_os::actions::ok::{OkResponse, mandatory_ok_stateless};
+use ascot_os::actions::serial::{SerialResponse, serial_stateless};
 use ascot_os::devices::light::Light;
 use ascot_os::extract::Path;
 use ascot_os::server::Server;

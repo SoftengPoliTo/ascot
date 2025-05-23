@@ -6,7 +6,7 @@ use serde::Serialize;
 use ascot::device::{DeviceEnvironment, DeviceKind};
 use ascot::route::RouteConfigs;
 
-use crate::request::{create_requests, Request, RequestInfo};
+use crate::request::{Request, RequestInfo, create_requests};
 
 pub(crate) fn build_device_address(scheme: &str, address: &IpAddr, port: u16) -> String {
     format!("{scheme}://{address}:{port}")
@@ -250,7 +250,7 @@ pub(crate) mod tests {
     use ascot::parameters::Parameters;
     use ascot::route::{Route, RouteConfigs};
 
-    use super::{build_device_address, Description, Device, Devices, NetworkInformation};
+    use super::{Description, Device, Devices, NetworkInformation, build_device_address};
 
     fn create_network_info(address: &str, port: u16) -> NetworkInformation {
         let ip_address = address.parse().unwrap();

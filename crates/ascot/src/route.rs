@@ -120,6 +120,7 @@ mod internal_route {
     #[derive(Debug)]
     pub struct Route {
         // Route.
+        #[allow(clippy::struct_field_names)]
         route: &'static str,
         // REST kind.
         rest_kind: RestKind,

@@ -1,0 +1,64 @@
+name: esp
+
+on:
+  push:
+    branches: [master]
+    # TODO: uncomment paths
+    # paths:
+    #   - 'crates/ascot-esp32c3/Cargo.lock'
+    #   - 'crates/ascot-esp32c3/**/Cargo.lock'
+    #   - 'crates/ascot-esp32c3/**/*.rs'
+    #   - 'crates/ascot-esp32c3/**/*.sh'
+    #   - 'crates/ascot-esp32c3/**/*.yml'
+    #   - 'crates/ascot-esp32c3/**/*.toml'
+  pull_request:
+    branches: [master]
+    types: [opened, synchronize]
+    # TODO: uncomment paths
+    # paths:
+    #   - 'crates/ascot-esp32c3/Cargo.lock'
+    #   - 'crates/ascot-esp32c3/**/Cargo.lock'
+    #   - 'crates/ascot-esp32c3/**/*.rs'
+    #   - 'crates/ascot-esp32c3/**/*.sh'
+    #   - 'crates/ascot-esp32c3/**/*.yml'
+    #   - 'crates/ascot-esp32c3/**/*.toml'
+
+jobs:
+  rustfmt-clippy-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: nightly
+          components: rustfmt, clippy
+
+      - name: Install ldproxy
+        run: |
+          cargo install ldproxy
+
+      - name: Run rustfmt
+        working-directory: crates/ascot-esp32c3
+        run: cargo fmt --all -- --check --verbose
+
+      - name: Run cargo clippy
+        working-directory: crates/ascot-esp32c3
+        run: cargo clippy --all-targets -- -Dclippy::all -Dclippy::pedantic
+
+      - name: Build
+        working-directory: crates/ascot-esp32c3
+        run: cargo build --verbose
+
+      - name: Build light
+        working-directory: crates/ascot-esp32c3/examples/light
+        run: |
+          sed -e 's/your Wi-Fi SSID/ssid/' \
+              -e 's/your Wi-Fi password/password/' \
+              -e 's/your hostname/hostname/' \
+              -e 's/your discovery service/service/' \
+              cfg.toml.example > cfg.toml
+          cargo build --verbose

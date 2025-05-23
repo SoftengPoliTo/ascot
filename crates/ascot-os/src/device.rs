@@ -130,8 +130,8 @@ mod tests {
     use serde::{Deserialize, Serialize};
 
     use crate::actions::error::ErrorResponse;
-    use crate::actions::info::{info_stateful, InfoResponse};
-    use crate::actions::serial::{serial_stateful, serial_stateless, SerialResponse};
+    use crate::actions::info::{InfoResponse, info_stateful};
+    use crate::actions::serial::{SerialResponse, serial_stateful, serial_stateless};
 
     use super::Device;
 

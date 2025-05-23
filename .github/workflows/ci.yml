@@ -1,0 +1,183 @@
+name: ci
+
+on:
+  push:
+    branches: [master]
+    # TODO: Uncomment
+    # paths:
+    #   - 'Cargo.lock'
+    #   - '**.rs'
+    #   - '**.sh'
+    #   - '**.yml'
+    #   - '**.toml'
+    #   - '!**.md'
+    #   - '!LICENSE'
+  pull_request:
+    branches: [master]
+    types: [opened, synchronize]
+    # TODO: Uncomment
+    # paths:
+    #   - 'Cargo.lock'
+    #   - '**.rs'
+    #   - '**.sh'
+    #   - '**.yml'
+    #   - '**.toml'
+    #   - '!**.md'
+    #   - '!LICENSE'
+
+env:
+  RUST_PREVIOUS_VERSION: 1.86.0
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  # Enable consistent use of `RUST_PREVIOUS_VERSION` across different jobs
+  prepare-checks:
+    runs-on: ubuntu-latest
+
+    outputs:
+      rust-prev-version: ${{ env.RUST_PREVIOUS_VERSION }}
+
+    steps:
+      - name: Set rust-prev-version output
+        run: echo "rust-prev-version=${RUST_PREVIOUS_VERSION}" >> $GITHUB_OUTPUT
+
+################################## FORMAT AND LINTS LAYER ######################
+
+  rustfmt-clippy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          components: clippy, rustfmt
+
+      - name: Run rustfmt
+        run: cargo fmt --all -- --check --verbose
+
+      - name: Run cargo clippy
+        run: cargo clippy --all-targets -- -Dclippy::all -Dclippy::pedantic
+
+################################## BUILD AND DOCS LAYER ########################
+
+  build:
+    needs: [rustfmt-clippy, prepare-checks]
+
+    strategy:
+      matrix:
+        platform: [ubuntu-latest, macos-latest, windows-latest]
+        rust: [stable, prev]
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Debug matrix and previous
+        run: |
+          echo "Matrix rust: ${{ matrix.rust }}"
+          echo "Prepare-checks rust-prev-version: ${{ needs.prepare-checks.outputs.rust-prev-version }}"
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ matrix.rust == 'prev' && needs.prepare-checks.outputs.rust-prev-version || 'stable' }}
+
+      - name: Build
+        run: cargo build --verbose
+
+  # check-previous-version:
+  #   needs: [prepare-checks, rustfmt-clippy]
+  #
+  #   runs-on: ubuntu-latest
+  #
+  #   strategy:
+  #     matrix:
+  #       rust: [prev]
+  #       include:
+  #         - rust: prev
+  #           toolchain: ${{ needs.prepare-checks.outputs.rust-prev-version }}
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #
+  #     - name: Install Rust previous version
+  #       uses: dtolnay/rust-toolchain@stable
+  #       with:
+  #         toolchain: ${{ matrix.toolchain }}
+  #
+  #     - name: Run cargo check
+  #       run: cargo check --verbose
+
+  docs:
+    needs: [build]
+
+    strategy:
+      matrix:
+        platform: [ubuntu-latest, macos-latest, windows-latest]
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+
+      - name: Generate docs
+        run: cargo doc --verbose --no-deps
+
+################################## CODE COVERAGE LAYER ##################################
+
+  code-coverage:
+    needs: [docs]
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+
+      - name: Install grcov
+        env:
+          GRCOV_BASE_URL: https://github.com/mozilla/grcov/releases
+          GRCOV_BINARY: grcov-x86_64-unknown-linux-musl.tar.bz2
+        run: |
+          # Get the latest release tag by:
+          # 1. Obtaining the URL of the latest release,
+          # 2. Extracting the semantic version from it,
+          # 3. Taking the first match found.
+          LATEST_TAG=$(curl -sIL -o /dev/null -w '%{url_effective}' "$GRCOV_BASE_URL/latest" | grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+' | head -n1)
+          GRCOV_URL="$GRCOV_BASE_URL/download/$LATEST_TAG/$GRCOV_BINARY"
+          curl -L "$GRCOV_URL" | tar xj -C $HOME/.cargo/bin
+
+      - name: Install llvm-tools-preview
+        run: rustup component add llvm-tools-preview
+
+      - name: Run tests
+        env:
+          RUSTFLAGS: "-Cinstrument-coverage"
+          LLVM_PROFILE_FILE: "ascot-%p-%m.profraw"
+        run: cargo test --verbose
+
+      - name: Generate lcov report
+        run: |
+          grcov . --binary-path ./target/debug/ -s . -t lcov --branch -o lcov.info
+
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: lcov.info
+          token: ${{ secrets.CODECOV_TOKEN }}
