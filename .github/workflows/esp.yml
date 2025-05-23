@@ -3,14 +3,25 @@ name: esp
 on:
   push:
     branches: [ master ]
-    # TODO: Uncomment
+    # TODO: uncomment paths
     # paths:
-    #   - 'crates/ascot-esp32c3/**'
+    #   - 'crates/ascot-esp32c3/Cargo.lock'
+    #   - 'crates/ascot-esp32c3/**/Cargo.lock'
+    #   - 'crates/ascot-esp32c3/**/*.rs'
+    #   - 'crates/ascot-esp32c3/**/*.sh'
+    #   - 'crates/ascot-esp32c3/**/*.yml'
+    #   - 'crates/ascot-esp32c3/**/*.toml'
   pull_request:
     branches: [ master ]
-    # TODO: Uncomment
+    types: [opened, synchronize]
+    # TODO: uncomment paths
     # paths:
-    #   - 'crates/ascot-esp32c3/**'
+    #   - 'crates/ascot-esp32c3/Cargo.lock'
+    #   - 'crates/ascot-esp32c3/**/Cargo.lock'
+    #   - 'crates/ascot-esp32c3/**/*.rs'
+    #   - 'crates/ascot-esp32c3/**/*.sh'
+    #   - 'crates/ascot-esp32c3/**/*.yml'
+    #   - 'crates/ascot-esp32c3/**/*.toml'
 
 jobs:
   rustfmt-clippy-build:
@@ -32,9 +43,9 @@ jobs:
           toolchain: nightly
           components: rustfmt, clippy
 
-      - name: Install ldproxy
-        run: |
-          cargo install ldproxy
+      # - name: Install ldproxy
+      #   run: |
+      #     cargo install ldproxy
 
       # - name: Run rustfmt
       #   working-directory: crates/ascot-esp32c3
