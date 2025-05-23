@@ -80,6 +80,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Debug matrix and output
+        run: |
+          echo "Matrix rust: ${{ matrix.rust }}"
+          echo "Prepare-checks rust-prev-version: ${{ needs.prepare-checks.outputs.rust-prev-version }}"
+
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
