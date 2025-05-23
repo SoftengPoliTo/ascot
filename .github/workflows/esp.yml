@@ -30,7 +30,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: nightly
-          components: rust-src, rustfmt, clippy
+          components: rustfmt, clippy
 
       - name: Install ldproxy
         run: |
