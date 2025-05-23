@@ -68,7 +68,7 @@ jobs:
 ################################## BUILD AND DOCS LAYER ########################
 
   build:
-    needs: [rustfmt-clippy]
+    needs: [rustfmt-clippy, prepare-checks]
 
     strategy:
       matrix:
