@@ -25,5 +25,5 @@ jobs:
       - name: Check semantic versioning violations
         uses: obi1kenobi/cargo-semver-checks-action@v2
         with:
-          no-publish: true
+          baseline-rev: 'master'
           exclude: ascot-esp32c3
