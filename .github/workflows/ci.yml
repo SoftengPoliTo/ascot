@@ -68,7 +68,7 @@ jobs:
 ################################## BUILD AND DOCS LAYER ########################
 
   build:
-    needs: [clippy-rustfmt]
+    needs: [rustfmt-clippy]
 
     strategy:
       matrix:
@@ -89,7 +89,7 @@ jobs:
         run: cargo build --verbose
 
   # check-previous-version:
-  #   needs: [prepare-checks, clippy-rustfmt]
+  #   needs: [prepare-checks, rustfmt-clippy]
   #
   #   runs-on: ubuntu-latest
   #
