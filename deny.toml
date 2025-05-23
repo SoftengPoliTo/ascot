@@ -1,5 +1,7 @@
+version = 2
+
 [licenses]
-allowed = [
+allow = [
   "MIT",
   "Apache-2.0",
   "0BSD",
@@ -7,3 +9,4 @@ allowed = [
 
 [licenses.sources]
 crates-io = true
+
