@@ -63,7 +63,7 @@ pub(crate) fn create_requests(
         .into_iter()
         .map(|route| {
             (
-                route.data.name.to_string(),
+                route.data.path.to_string(),
                 Request::new(complete_address, main_route, environment, route),
             )
         })
@@ -151,7 +151,7 @@ impl Request {
             "{}/{}/{}",
             slash_end(address),
             slash_start_end(main_route),
-            slash_start_end(&route_config.data.name)
+            slash_start_end(&route_config.data.path)
         );
         let hazards = route_config.data.hazards;
         let parameters_data = route_config.data.parameters;
@@ -452,7 +452,7 @@ mod tests {
 
     #[test]
     fn check_request_builder() {
-        let route = Route::put("/route").serialize_data();
+        let route = Route::put("Route", "/route").serialize_data();
         let environment = DeviceEnvironment::Os;
 
         request_builder(ADDRESS_ROUTE, "light/", environment, route.clone());
@@ -461,25 +461,25 @@ mod tests {
 
     #[test]
     fn create_plain_get_request() {
-        let route = Route::get("/route").description("A GET route.");
+        let route = Route::get("Route", "/route").description("A GET route.");
         plain_request(route, RestKind::Get, Hazards::new());
     }
 
     #[test]
     fn create_plain_post_request() {
-        let route = Route::post("/route").description("A POST route.");
+        let route = Route::post("Route", "/route").description("A POST route.");
         plain_request(route, RestKind::Post, Hazards::new());
     }
 
     #[test]
     fn create_plain_put_request() {
-        let route = Route::put("/route").description("A PUT route.");
+        let route = Route::put("Route", "/route").description("A PUT route.");
         plain_request(route, RestKind::Put, Hazards::new());
     }
 
     #[test]
     fn create_plain_delete_request() {
-        let route = Route::delete("/route").description("A DELETE route.");
+        let route = Route::delete("Route", "/route").description("A DELETE route.");
         plain_request(route, RestKind::Delete, Hazards::new());
     }
 
@@ -489,7 +489,7 @@ mod tests {
             .insert(Hazard::FireHazard)
             .insert(Hazard::AirPoisoning);
         plain_request(
-            Route::get("/route")
+            Route::get("Route", "/route")
                 .description("A GET route.")
                 .with_hazards(hazards.clone()),
             RestKind::Get,
@@ -500,7 +500,7 @@ mod tests {
     #[test]
     fn create_get_request_with_parameters() {
         request_with_parameters(
-            Route::get("/route").description("A GET route."),
+            Route::get("Route", "/route").description("A GET route."),
             RestKind::Get,
             &Hazards::new(),
         );
@@ -508,19 +508,19 @@ mod tests {
 
     #[test]
     fn create_post_request_with_parameters() {
-        let route = Route::post("/route").description("A POST route.");
+        let route = Route::post("Route", "/route").description("A POST route.");
         request_with_parameters(route, RestKind::Post, &Hazards::new());
     }
 
     #[test]
     fn create_put_request_with_parameters() {
-        let route = Route::put("/route").description("A PUT route.");
+        let route = Route::put("Route", "/route").description("A PUT route.");
         request_with_parameters(route, RestKind::Put, &Hazards::new());
     }
 
     #[test]
     fn create_delete_request_with_parameters() {
-        let route = Route::delete("/route").description("A DELETE route.");
+        let route = Route::delete("Route", "/route").description("A DELETE route.");
         request_with_parameters(route, RestKind::Delete, &Hazards::new());
     }
 
@@ -531,7 +531,7 @@ mod tests {
             .insert(Hazard::AirPoisoning);
 
         request_with_parameters(
-            Route::get("/route")
+            Route::get("Route", "/route")
                 .description("A GET route.")
                 .with_hazards(hazards.clone()),
             RestKind::Get,

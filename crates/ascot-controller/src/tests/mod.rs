@@ -57,12 +57,12 @@ async fn light(
     close_rx: tokio::sync::oneshot::Receiver<()>,
 ) {
     // Turn light on `PUT` route.
-    let light_on_route = Route::put("/on")
+    let light_on_route = Route::put("On", "/on")
         .description("Turn light on.")
         .with_hazard(Hazard::ElectricEnergyConsumption);
 
     // Turn light off `PUT` route.
-    let light_off_route = Route::put("/off")
+    let light_off_route = Route::put("Off", "/off")
         .description("Turn light off.")
         .with_hazard(Hazard::LogEnergyConsumption);
 
@@ -75,7 +75,7 @@ async fn light(
 
     let device = if with_toggle {
         // Toggle `PUT` route.
-        let toggle_route = Route::get("/toggle")
+        let toggle_route = Route::get("Toggle", "/toggle")
             .description("Toggle a light.")
             .with_hazards(
                 Hazards::new()

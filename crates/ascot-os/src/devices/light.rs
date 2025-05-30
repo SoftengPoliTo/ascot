@@ -248,7 +248,7 @@ mod tests {
     #[inline]
     fn create_routes() -> Routes {
         Routes {
-            light_on: Route::put("/on")
+            light_on: Route::put("On", "/on")
                 .description("Turn light on.")
                 .with_hazard(Hazard::ElectricEnergyConsumption)
                 .with_parameters(
@@ -257,7 +257,7 @@ mod tests {
                         .bool("save-energy", false),
                 ),
 
-            light_on_post: Route::post("/on")
+            light_on_post: Route::post("On", "/on")
                 .description("Turn light on.")
                 .with_hazard(Hazard::ElectricEnergyConsumption)
                 .with_parameters(
@@ -266,9 +266,9 @@ mod tests {
                         .bool("save-energy", false),
                 ),
 
-            light_off: Route::put("/off").description("Turn light off."),
+            light_off: Route::put("Off", "/off").description("Turn light off."),
 
-            toggle: Route::put("/toggle")
+            toggle: Route::put("Toggle", "/toggle")
                 .description("Toggle a light.")
                 .with_hazard(Hazard::ElectricEnergyConsumption),
         }

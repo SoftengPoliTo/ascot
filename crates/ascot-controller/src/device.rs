@@ -281,15 +281,15 @@ pub(crate) mod tests {
         let network_info = create_network_info("192.168.1.174", 5000);
         let description = create_description(DeviceKind::Light, "light/");
 
-        let light_on_route = Route::put("/on")
+        let light_on_route = Route::put("On", "/on")
             .description("Turn light on.")
             .with_hazard(Hazard::ElectricEnergyConsumption);
 
-        let light_off_route = Route::put("/off")
+        let light_off_route = Route::put("Off", "/off")
             .description("Turn light off.")
             .with_hazard(Hazard::LogEnergyConsumption);
 
-        let toggle_route = Route::get("/toggle")
+        let toggle_route = Route::get("Toggle", "/toggle")
             .description("Toggle a light.")
             .with_hazards(
                 Hazards::new()
@@ -310,7 +310,7 @@ pub(crate) mod tests {
         let network_info = create_network_info("192.168.1.176", 5500);
         let description = create_description(DeviceKind::Unknown, "ip-camera/");
 
-        let camera_stream_route = Route::get("/stream")
+        let camera_stream_route = Route::get("Stream", "/stream")
             .description("View camera stream.")
             .with_hazards(
                 Hazards::new()
@@ -319,7 +319,7 @@ pub(crate) mod tests {
                     .insert(Hazard::VideoRecordAndStore),
             );
 
-        let screenshot_route = Route::get("/take-screenshot")
+        let screenshot_route = Route::get("Take screenshot", "/take-screenshot")
             .description("Take a screenshot.")
             .with_hazards(
                 Hazards::new()

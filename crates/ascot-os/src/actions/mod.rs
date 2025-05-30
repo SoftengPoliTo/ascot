@@ -129,9 +129,9 @@ impl DeviceAction {
         let route = if matches!(route_config.rest_kind, RestKind::Get)
             && !route_config.data.parameters.is_empty()
         {
-            &build_get_route(&route_config.data.name, &route_config.data.parameters)
+            &build_get_route(&route_config.data.path, &route_config.data.parameters)
         } else {
-            route_config.data.name.as_ref()
+            route_config.data.path.as_ref()
         };
 
         let router = Router::new()
@@ -163,7 +163,7 @@ impl MandatoryAction<false> {
         Self {
             device_action: DeviceAction {
                 router: Router::new(),
-                route_config: Route::get("").serialize_data(),
+                route_config: Route::get("", "").serialize_data(),
             },
         }
     }
@@ -193,7 +193,7 @@ mod tests {
 
     #[test]
     fn test_build_get_route() {
-        let route = Route::get("/route")
+        let route = Route::get("Route", "/route")
             .description("A GET route.")
             .with_parameters(
                 Parameters::new()
@@ -203,7 +203,7 @@ mod tests {
             .serialize_data();
 
         assert_eq!(
-            &build_get_route(&route.data.name, &route.data.parameters),
+            &build_get_route(&route.data.path, &route.data.parameters),
             "/route/{rangeu64}/{rangef64}"
         );
     }

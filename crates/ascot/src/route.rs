@@ -42,6 +42,8 @@ mod internal_route {
     pub struct RouteData {
         /// Name.
         pub name: Cow<'static, str>,
+        /// Path.
+        pub path: Cow<'static, str>,
         /// Description.
         pub description: Option<Cow<'static, str>>,
         /// Hazards data.
@@ -56,7 +58,7 @@ mod internal_route {
 
     impl PartialEq for RouteData {
         fn eq(&self, other: &Self) -> bool {
-            self.name.eq(&other.name)
+            self.path.eq(&other.path)
         }
     }
 
@@ -64,6 +66,7 @@ mod internal_route {
         fn new(route: Route) -> Self {
             Self {
                 name: route.name.into(),
+                path: route.path.into(),
                 description: route.description.map(core::convert::Into::into),
                 hazards: route.hazards,
                 parameters: route.parameters.serialize_data(),
@@ -98,7 +101,7 @@ mod internal_route {
 
     impl core::hash::Hash for RouteConfig {
         fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
-            self.data.name.hash(state);
+            self.data.path.hash(state);
             self.rest_kind.hash(state);
         }
     }
@@ -119,8 +122,10 @@ mod internal_route {
     /// a remote device.
     #[derive(Debug)]
     pub struct Route {
-        // Route.
+        // Name.
         name: &'static str,
+        // Path.
+        path: &'static str,
         // REST kind.
         rest_kind: RestKind,
         // Description.
@@ -133,7 +138,7 @@ mod internal_route {
 
     impl PartialEq for Route {
         fn eq(&self, other: &Self) -> bool {
-            self.name == other.name && self.rest_kind == other.rest_kind
+            self.path == other.path && self.rest_kind == other.rest_kind
         }
     }
 
@@ -141,7 +146,7 @@ mod internal_route {
 
     impl core::hash::Hash for Route {
         fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
-            self.name.hash(state);
+            self.path.hash(state);
             self.rest_kind.hash(state);
         }
     }
@@ -150,29 +155,29 @@ mod internal_route {
         /// Creates a new [`Route`] through a REST `GET` API.
         #[must_use]
         #[inline]
-        pub fn get(route: &'static str) -> Self {
-            Self::init(RestKind::Get, route)
+        pub fn get(name: &'static str, path: &'static str) -> Self {
+            Self::init(RestKind::Get, name, path)
         }
 
         /// Creates a new [`Route`] through a REST `PUT` API.
         #[must_use]
         #[inline]
-        pub fn put(route: &'static str) -> Self {
-            Self::init(RestKind::Put, route)
+        pub fn put(name: &'static str, path: &'static str) -> Self {
+            Self::init(RestKind::Put, name, path)
         }
 
         /// Creates a new [`Route`] through a REST `POST` API.
         #[must_use]
         #[inline]
-        pub fn post(route: &'static str) -> Self {
-            Self::init(RestKind::Post, route)
+        pub fn post(name: &'static str, path: &'static str) -> Self {
+            Self::init(RestKind::Post, name, path)
         }
 
         /// Creates a new [`Route`] through a REST `DELETE` API.
         #[must_use]
         #[inline]
-        pub fn delete(route: &'static str) -> Self {
-            Self::init(RestKind::Delete, route)
+        pub fn delete(name: &'static str, path: &'static str) -> Self {
+            Self::init(RestKind::Delete, name, path)
         }
 
         /// Sets the route description.
@@ -182,10 +187,17 @@ mod internal_route {
             self
         }
 
-        /// Changes the route.
+        /// Changes the route name.
         #[must_use]
-        pub const fn change_route(mut self, route: &'static str) -> Self {
-            self.name = route;
+        pub const fn change_name(mut self, name: &'static str) -> Self {
+            self.name = name;
+            self
+        }
+
+        /// Changes the route path.
+        #[must_use]
+        pub const fn change_path(mut self, path: &'static str) -> Self {
+            self.path = path;
             self
         }
 
@@ -221,10 +233,10 @@ mod internal_route {
             self
         }
 
-        /// Returns route.
+        /// Returns route path.
         #[must_use]
         pub fn route(&self) -> &str {
-            self.name
+            self.path
         }
 
         /// Returns [`RestKind`].
@@ -254,9 +266,10 @@ mod internal_route {
             RouteConfig::new(self)
         }
 
-        fn init(rest_kind: RestKind, route: &'static str) -> Self {
+        fn init(rest_kind: RestKind, name: &'static str, path: &'static str) -> Self {
             Self {
-                name: route,
+                name,
+                path,
                 rest_kind,
                 description: None,
                 hazards: Hazards::new(),
@@ -304,7 +317,8 @@ mod tests {
             rest_kind,
             response_kind: ResponseKind::default(),
             data: RouteData {
-                name: "/route".into(),
+                name: "Route".into(),
+                path: "/route".into(),
                 description: Some(desc.into()),
                 hazards,
                 parameters,
@@ -316,7 +330,7 @@ mod tests {
     fn test_all_routes() {
         assert_eq!(
             deserialize::<RouteConfig>(serialize(
-                Route::get("/route")
+                Route::get("Route", "/route")
                     .description("A GET route")
                     .serialize_data()
             )),
@@ -325,7 +339,7 @@ mod tests {
 
         assert_eq!(
             deserialize::<RouteConfig>(serialize(
-                Route::put("/route")
+                Route::put("Route", "/route")
                     .description("A PUT route")
                     .serialize_data()
             )),
@@ -334,7 +348,7 @@ mod tests {
 
         assert_eq!(
             deserialize::<RouteConfig>(serialize(
-                Route::post("/route")
+                Route::post("Route", "/route")
                     .description("A POST route")
                     .serialize_data()
             )),
@@ -343,7 +357,7 @@ mod tests {
 
         assert_eq!(
             deserialize::<RouteConfig>(serialize(
-                Route::delete("/route")
+                Route::delete("Route", "/route")
                     .description("A DELETE route")
                     .serialize_data()
             )),
@@ -355,7 +369,7 @@ mod tests {
     fn test_all_hazards() {
         assert_eq!(
             deserialize::<RouteConfig>(serialize(
-                Route::get("/route")
+                Route::get("Route", "/route")
                     .description("A GET route")
                     .with_hazard(Hazard::FireHazard)
                     .serialize_data()
@@ -369,7 +383,7 @@ mod tests {
 
         assert_eq!(
             deserialize::<RouteConfig>(serialize(
-                Route::get("/route")
+                Route::get("Route", "/route")
                     .description("A GET route")
                     .with_hazards(
                         Hazards::new()
@@ -389,7 +403,7 @@ mod tests {
 
         assert_eq!(
             deserialize::<RouteConfig>(serialize(
-                Route::get("/route")
+                Route::get("Route", "/route")
                     .description("A GET route")
                     .with_slice_hazards(&[Hazard::FireHazard, Hazard::AirPoisoning])
                     .serialize_data()
@@ -423,7 +437,7 @@ mod tests {
 
         assert_eq!(
             deserialize::<RouteConfig>(serialize(
-                Route::get("/route")
+                Route::get("Route", "/route")
                     .description("A GET route")
                     .with_parameters(
                         Parameters::new()
