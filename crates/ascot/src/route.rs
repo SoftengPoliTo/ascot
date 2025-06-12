@@ -30,6 +30,7 @@ mod internal_route {
     use alloc::borrow::Cow;
 
     use crate::hazards::{Hazard, Hazards};
+    use crate::macros::mandatory_route;
     use crate::parameters::{Parameters, ParametersData};
     use crate::response::ResponseKind;
 
@@ -280,10 +281,13 @@ mod internal_route {
 
     /// A collection of [`Route`]s.
     pub type Routes = Set<Route>;
+
+    mandatory_route!(LightOnRoute, "/on", methods: [put]);
+    mandatory_route!(LightOffRoute, "/off", methods: [put]);
 }
 
 #[cfg(feature = "alloc")]
-pub use internal_route::{Route, RouteConfig, RouteConfigs, RouteData, Routes};
+pub use internal_route::{Route, RouteConfig, RouteConfigs, RouteData, Routes, LightOnRoute, LightOffRoute};
 
 #[cfg(feature = "alloc")]
 #[cfg(test)]
