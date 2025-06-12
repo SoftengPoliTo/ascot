@@ -158,9 +158,10 @@ where
 
     /// Converts a [`Light`] into a [`Device`].
     pub fn into_device(self) -> Device<S> {
-        self.device
-            .add_device_action(self.turn_light_on.device_action)
-            .add_device_action(self.turn_light_off.device_action)
+        self.device.add_mandatory_actions([
+            self.turn_light_on.device_action,
+            self.turn_light_off.device_action,
+        ])
     }
 }
 

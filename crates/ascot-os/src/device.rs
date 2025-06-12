@@ -92,6 +92,20 @@ where
         self
     }
 
+    pub(crate) fn add_mandatory_actions<I>(mut self, actions: I) -> Self
+    where
+        I: IntoIterator<Item = DeviceAction>,
+    {
+        let mut mandatory_routes = RouteConfigs::new();
+        for action in actions {
+            self.router = self.router.merge(action.router);
+            mandatory_routes.add(action.route_config);
+        }
+
+        self.route_configs = mandatory_routes.extend(self.route_configs);
+        self
+    }
+
     pub(crate) fn finalize(self) -> (&'static str, DeviceData, Router) {
         for route in &self.route_configs {
             info!(
