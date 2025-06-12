@@ -66,15 +66,14 @@ super::all_the_tuples!(impl_serial_type_name);
 /// Creates a mandatory stateful [`DeviceAction`] with a [`SerialResponse`].
 #[inline]
 pub fn mandatory_serial_stateful<H, T, S>(
-    route: Route,
     handler: H,
-) -> impl FnOnce(S) -> MandatoryAction<false>
+) -> impl FnOnce(Route, S) -> MandatoryAction<false>
 where
     H: Handler<T, S> + private::SerialTypeName<T>,
     T: 'static,
     S: Clone + Send + Sync + 'static,
 {
-    move |state: S| {
+    move |route: Route, state: S| {
         MandatoryAction::new(DeviceAction::stateful(
             route,
             ResponseKind::Serial,
@@ -98,15 +97,14 @@ where
 /// Creates a mandatory stateless [`DeviceAction`] with a [`SerialResponse`].
 #[inline]
 pub fn mandatory_serial_stateless<H, T, S>(
-    route: Route,
     handler: H,
-) -> impl FnOnce(S) -> MandatoryAction<false>
+) -> impl FnOnce(Route, S) -> MandatoryAction<false>
 where
     H: Handler<T, ()> + private::SerialTypeName<T>,
     T: 'static,
     S: Clone + Send + Sync + 'static,
 {
-    move |_state: S| {
+    move |route: Route, _state: S| {
         MandatoryAction::new(DeviceAction::stateless(
             route,
             ResponseKind::Serial,

@@ -107,15 +107,14 @@ super::all_the_tuples!(impl_empty_type_name);
 /// Creates a mandatory stateful [`DeviceAction`] with a [`StreamResponse`].
 #[inline]
 pub fn mandatory_stream_stateful<H, T, S>(
-    route: Route,
     handler: H,
-) -> impl FnOnce(S) -> MandatoryAction<false>
+) -> impl FnOnce(Route, S) -> MandatoryAction<false>
 where
     H: Handler<T, S> + private::StreamTypeName<T>,
     T: 'static,
     S: Clone + Send + Sync + 'static,
 {
-    move |state: S| {
+    move |route: Route, state: S| {
         MandatoryAction::new(DeviceAction::stateful(
             route,
             ResponseKind::Stream,
@@ -139,15 +138,14 @@ where
 /// Creates a mandatory stateless [`DeviceAction`] with a [`StreamResponse`].
 #[inline]
 pub fn mandatory_stream_stateless<H, T, S>(
-    route: Route,
     handler: H,
-) -> impl FnOnce(S) -> MandatoryAction<false>
+) -> impl FnOnce(Route, S) -> MandatoryAction<false>
 where
     H: Handler<T, ()> + private::StreamTypeName<T>,
     T: 'static,
     S: Clone + Send + Sync + 'static,
 {
-    move |_state: S| {
+    move |route: Route, _state: S| {
         MandatoryAction::new(DeviceAction::stateless(
             route,
             ResponseKind::Stream,

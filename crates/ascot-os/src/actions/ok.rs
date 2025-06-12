@@ -62,15 +62,14 @@ super::all_the_tuples!(impl_ok_type_name);
 /// Creates a mandatory stateful [`DeviceAction`] with an [`OkResponse`].
 #[inline]
 pub fn mandatory_ok_stateful<H, T, S>(
-    route: Route,
     handler: H,
-) -> impl FnOnce(S) -> MandatoryAction<false>
+) -> impl FnOnce(Route, S) -> MandatoryAction<false>
 where
     H: Handler<T, S> + private::OkTypeName<T>,
     T: 'static,
     S: Clone + Send + Sync + 'static,
 {
-    move |state: S| {
+    move |route: Route, state: S| {
         MandatoryAction::new(DeviceAction::stateful(
             route,
             ResponseKind::Ok,
@@ -94,15 +93,14 @@ where
 /// Creates a mandatory stateless [`DeviceAction`] with an [`OkResponse`].
 #[inline]
 pub fn mandatory_ok_stateless<H, T, S>(
-    route: Route,
     handler: H,
-) -> impl FnOnce(S) -> MandatoryAction<false>
+) -> impl FnOnce(Route, S) -> MandatoryAction<false>
 where
     H: Handler<T, ()> + private::OkTypeName<T>,
     T: 'static,
     S: Clone + Send + Sync + 'static,
 {
-    move |_state: S| MandatoryAction::new(DeviceAction::stateless(route, ResponseKind::Ok, handler))
+    move |route: Route, _state: S| MandatoryAction::new(DeviceAction::stateless(route, ResponseKind::Ok, handler))
 }
 
 /// Creates a stateless [`DeviceAction`] with an [`OkResponse`].
