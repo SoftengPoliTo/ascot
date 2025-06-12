@@ -5,7 +5,7 @@ use ascot::device::{DeviceEnvironment, DeviceKind};
 use ascot::hazards::{Hazard, Hazards};
 use ascot::parameters::{ParameterKind, Parameters, ParametersData};
 use ascot::response::ResponseKind;
-use ascot::route::{RestKind, Route};
+use ascot::route::{LightOffRoute, LightOnRoute, RestKind, Route};
 
 use ascot_os::actions::error::ErrorResponse;
 use ascot_os::actions::ok::{OkResponse, mandatory_ok_stateless};
@@ -57,21 +57,21 @@ async fn light(
     close_rx: tokio::sync::oneshot::Receiver<()>,
 ) {
     // Turn light on `PUT` route.
-    let light_on_route = Route::put("On", "/on")
+    let light_on_route = LightOnRoute::put("On")
         .description("Turn light on.")
         .with_hazard(Hazard::ElectricEnergyConsumption);
 
     // Turn light off `PUT` route.
-    let light_off_route = Route::put("Off", "/off")
+    let light_off_route = LightOffRoute::put("Off")
         .description("Turn light off.")
         .with_hazard(Hazard::LogEnergyConsumption);
 
     // A light device which is going to be run on the server.
     let device = Light::new()
         // This method is mandatory, if not called, a compiler error is raised.
-        .turn_light_on(mandatory_ok_stateless(light_on_route, turn_light_on))
+        .turn_light_on(light_on_route, mandatory_ok_stateless(turn_light_on))
         // This method is mandatory, if not called, a compiler error is raised.
-        .turn_light_off(mandatory_ok_stateless(light_off_route, turn_light_off));
+        .turn_light_off(light_off_route, mandatory_ok_stateless(turn_light_off));
 
     let device = if with_toggle {
         // Toggle `PUT` route.
