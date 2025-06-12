@@ -145,6 +145,13 @@ macro_rules! set_implementation {
             pub fn merge(&mut self, element: &Self) {
                 self.0 = self.0.union(&element.0).cloned().collect();
             }
+
+            #[doc = concat!("Consumes and inserts all elements from another [`", stringify!($impl), "`] into this one.")]
+            #[inline]
+            pub fn extend(mut self, other: Self) -> Self {
+                self.0.extend(other);
+                self
+            }
         }
     };
 }
