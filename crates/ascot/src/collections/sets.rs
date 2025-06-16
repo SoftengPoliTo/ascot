@@ -147,6 +147,7 @@ macro_rules! set_implementation {
             }
 
             #[doc = concat!("Consumes and inserts all elements from another [`", stringify!($impl), "`] into this one.")]
+            #[must_use]
             #[inline]
             pub fn extend(mut self, other: Self) -> Self {
                 self.0.extend(other);
