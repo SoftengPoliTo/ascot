@@ -112,7 +112,7 @@ pub struct Device {
     // All device routes with their hazards and handlers.
     routes_data: Vec<DeviceAction>,
     // Number of mandatory routes.
-    mandatory_routes: u8
+    mandatory_routes: u8,
 }
 
 impl Device {
@@ -162,7 +162,7 @@ impl Device {
                 DeviceEnvironment::Esp32,
                 self.main_route,
                 route_configs,
-                self.mandatory_routes
+                self.mandatory_routes,
             ),
             self.routes_data,
         )

@@ -287,7 +287,9 @@ mod internal_route {
 }
 
 #[cfg(feature = "alloc")]
-pub use internal_route::{Route, RouteConfig, RouteConfigs, RouteData, Routes, LightOnRoute, LightOffRoute};
+pub use internal_route::{
+    LightOffRoute, LightOnRoute, Route, RouteConfig, RouteConfigs, RouteData, Routes,
+};
 
 #[cfg(feature = "alloc")]
 #[cfg(test)]

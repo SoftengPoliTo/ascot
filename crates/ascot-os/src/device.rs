@@ -27,7 +27,7 @@ where
     // All device routes and their hazards.
     route_configs: RouteConfigs,
     /// Number of mandatory routes.
-    num_mandatory_routes: u8
+    num_mandatory_routes: u8,
 }
 
 impl Default for Device<()> {
@@ -85,7 +85,7 @@ where
             kind,
             route_configs: RouteConfigs::new(),
             state,
-            num_mandatory_routes: 0
+            num_mandatory_routes: 0,
         }
     }
 
