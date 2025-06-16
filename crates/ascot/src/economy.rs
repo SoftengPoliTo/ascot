@@ -183,3 +183,65 @@ impl Economy {
         self.costs.is_none() && self.roi.is_none()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    #[cfg(feature = "alloc")]
+    use super::Economy;
+    #[cfg(feature = "alloc")]
+    use crate::collections::OutputSet;
+
+    use crate::energy::EnergyClass;
+    use crate::{deserialize, serialize};
+
+    use super::{Cost, CostTimespan, Roi};
+
+    #[test]
+    fn test_cost_timespan() {
+        for cost_timespan in &[CostTimespan::Week, CostTimespan::Month, CostTimespan::Year] {
+            assert_eq!(
+                deserialize::<CostTimespan>(serialize(cost_timespan)),
+                *cost_timespan
+            );
+        }
+    }
+
+    #[test]
+    fn test_cost() {
+        let cost = Cost::new(100, CostTimespan::Week);
+
+        assert_eq!(deserialize::<Cost>(serialize(cost)), cost);
+    }
+
+    #[test]
+    fn test_roi_serde() {
+        let roi = Roi::new(10, EnergyClass::A);
+
+        assert_eq!(deserialize::<Roi>(serialize(roi)), roi);
+    }
+
+    #[test]
+    fn test_roi_clamping() {
+        assert_eq!(Roi::new(0, EnergyClass::A).years, 1);
+        assert_eq!(Roi::new(31, EnergyClass::A).years, 30);
+        assert_eq!(Roi::new(20, EnergyClass::A).years, 20);
+    }
+
+    #[cfg(feature = "alloc")]
+    #[test]
+    fn test_economy() {
+        let mut economy = Economy::empty();
+
+        let costs = OutputSet::init(Cost::new(100, CostTimespan::Week))
+            .insert(Cost::new(1000, CostTimespan::Month));
+
+        let roi =
+            OutputSet::init(Roi::new(10, EnergyClass::A)).insert(Roi::new(20, EnergyClass::B));
+
+        assert!(economy.is_empty());
+
+        economy = economy.costs(costs).roi(roi);
+
+        assert_eq!(deserialize::<Economy>(serialize(&economy)), economy);
+    }
+}
