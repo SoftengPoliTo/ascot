@@ -223,7 +223,7 @@ async fn main() -> Result<(), Error> {
     let state = LightState::new(LightMockup::default(), DeviceInfo::empty());
 
     // Turn light on `PUT` route.
-    let light_on_route = Route::put("/on")
+    let light_on_route = Route::put("On", "/on")
         .description("Turn light on.")
         .with_hazard(Hazard::ElectricEnergyConsumption)
         .with_parameters(
@@ -233,7 +233,7 @@ async fn main() -> Result<(), Error> {
         );
 
     // Turn light on `POST` route.
-    let light_on_post_route = Route::post("/on")
+    let light_on_post_route = Route::post("On", "/on")
         .description("Turn light on.")
         .with_hazard(Hazard::ElectricEnergyConsumption)
         .with_parameters(
@@ -243,20 +243,20 @@ async fn main() -> Result<(), Error> {
         );
 
     // Turn light off `PUT` route.
-    let light_off_route = Route::put("/off").description("Turn light off.");
+    let light_off_route = Route::put("Off", "/off").description("Turn light off.");
 
     // Toggle `PUT` route.
-    let toggle_route = Route::put("/toggle")
+    let toggle_route = Route::put("Toggle", "/toggle")
         .description("Toggle a light.")
         .with_hazard(Hazard::ElectricEnergyConsumption);
 
     // Device info `GET` route.
-    let info_route = Route::get("/info")
+    let info_route = Route::get("Info", "/info")
         .description("Get info about a light.")
         .with_hazard(Hazard::LogEnergyConsumption);
 
     // Update energy efficiency `GET` route.
-    let update_energy_efficiency_route = Route::get("/update-energy")
+    let update_energy_efficiency_route = Route::get("Update energy", "/update-energy")
         .description("Update energy efficiency.")
         .with_hazard(Hazard::LogEnergyConsumption);
 

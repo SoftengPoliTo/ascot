@@ -69,7 +69,7 @@ fn main() -> ascot_esp32c3::error::Result<()> {
     let temp_led_on = temp_led_main.clone();
     let light_on_action = DeviceAction::new(
         // Configuration for the `PUT` turn light on route.
-        Route::put("/on")
+        Route::put("On", "/on")
             .description("Turn light on.")
             .with_hazard(Hazard::FireHazard),
         ResponseBuilder(|req| req.into_ok_response(), "Turning led on went well!"),
@@ -87,7 +87,7 @@ fn main() -> ascot_esp32c3::error::Result<()> {
     let temp_led_off = temp_led_main.clone();
     let light_off_action = DeviceAction::new(
         // Configuration for the `PUT` turn light off route.
-        Route::put("/off").description("Turn light off."),
+        Route::put("Off", "/off").description("Turn light off."),
         ResponseBuilder(|req| req.into_ok_response(), "Turning led off went well!"),
     )
     .body(move || {

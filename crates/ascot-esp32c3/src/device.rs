@@ -111,6 +111,8 @@ pub struct Device {
     main_route: &'static str,
     // All device routes with their hazards and handlers.
     routes_data: Vec<DeviceAction>,
+    // Number of mandatory routes.
+    mandatory_routes: u8,
 }
 
 impl Device {
@@ -121,6 +123,7 @@ impl Device {
             kind,
             main_route: DEFAULT_MAIN_ROUTE,
             routes_data: Vec::new(),
+            mandatory_routes: 0,
         }
     }
 
@@ -138,6 +141,13 @@ impl Device {
         self
     }
 
+    /// Sets number of mandatory actions.
+    #[must_use]
+    pub const fn mandatory_routes(mut self, mandatory_routes: u8) -> Self {
+        self.mandatory_routes = mandatory_routes;
+        self
+    }
+
     pub(crate) fn finalize(self) -> (&'static str, DeviceData, Vec<DeviceAction>) {
         // TODO: Decouple Router and action information.
         let mut route_configs = RouteConfigs::new();
@@ -152,6 +162,7 @@ impl Device {
                 DeviceEnvironment::Esp32,
                 self.main_route,
                 route_configs,
+                self.mandatory_routes,
             ),
             self.routes_data,
         )

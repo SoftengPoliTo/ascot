@@ -26,6 +26,8 @@ where
     kind: DeviceKind,
     // All device routes and their hazards.
     route_configs: RouteConfigs,
+    /// Number of mandatory routes.
+    num_mandatory_routes: u8,
 }
 
 impl Default for Device<()> {
@@ -83,6 +85,7 @@ where
             kind,
             route_configs: RouteConfigs::new(),
             state,
+            num_mandatory_routes: 0,
         }
     }
 
@@ -92,11 +95,26 @@ where
         self
     }
 
+    pub(crate) fn add_mandatory_actions<I>(mut self, actions: I) -> Self
+    where
+        I: IntoIterator<Item = DeviceAction>,
+    {
+        let mut mandatory_routes = RouteConfigs::new();
+        for action in actions {
+            self.router = self.router.merge(action.router);
+            self.num_mandatory_routes += 1;
+            mandatory_routes.add(action.route_config);
+        }
+
+        self.route_configs = mandatory_routes.extend(self.route_configs);
+        self
+    }
+
     pub(crate) fn finalize(self) -> (&'static str, DeviceData, Router) {
         for route in &self.route_configs {
             info!(
                 "Device route: [{}, \"{}{}\"]",
-                route.rest_kind, self.main_route, route.data.name,
+                route.rest_kind, self.main_route, route.data.path,
             );
         }
 
@@ -107,6 +125,7 @@ where
                 DeviceEnvironment::Os,
                 self.main_route,
                 self.route_configs,
+                self.num_mandatory_routes,
             ),
             self.router,
         )
@@ -293,9 +312,10 @@ mod tests {
     #[inline]
     fn create_routes() -> AllRoutes {
         AllRoutes {
-            with_state_route: Route::put("/state-action").description("Run action with state."),
+            with_state_route: Route::put("State action", "/state-action")
+                .description("Run action with state."),
 
-            without_state_route: Route::post("/no-state-route")
+            without_state_route: Route::post("No state route", "/no-state-route")
                 .description("Run action without state."),
         }
     }
@@ -329,11 +349,12 @@ mod tests {
                 serial_action_with_substate1,
             ))
             .add_action(serial_stateful(
-                Route::put("/substate-action").description("Run a serial action with a substate."),
+                Route::put("Substate action", "/substate-action")
+                    .description("Run a serial action with a substate."),
                 serial_action_with_substate2,
             ))
             .add_info_action(info_stateful(
-                Route::put("/substate-info")
+                Route::put("Substate info", "/substate-info")
                     .description("Run an informative action with a substate."),
                 info_action_with_substate3,
             ))

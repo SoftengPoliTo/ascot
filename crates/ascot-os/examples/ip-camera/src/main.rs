@@ -136,35 +136,35 @@ fn camera_format(
 
 fn change_format(device: Device<InternalState>) -> Device<InternalState> {
     // Route to change camera index.
-    let change_camera_route = Route::get("/change-camera")
+    let change_camera_route = Route::get("Change camera", "/change-camera")
         .description("Change camera.")
         .with_parameters(Parameters::new().characters_sequence("index", "0"));
 
     // Route to change format type to random.
     let change_format_random_route =
-        Route::get("/random").description("Change stream format type to random.");
+        Route::get("Random", "/random").description("Change stream format type to random.");
 
     // Route to change format type to highest resolution.
     let change_format_absolute_highest_resolution_route =
-        Route::get("/absolute-highest-resolution")
+        Route::get("Absolute highest resolution", "/absolute-highest-resolution")
             .description("Change stream format type to absolute highest resolution.");
 
     // Route to change format type to highest frame rate.
-    let change_format_absolute_highest_framerate_route = Route::get("/absolute-highest-framerate")
+    let change_format_absolute_highest_framerate_route = Route::get("Absolute highest framerate", "/absolute-highest-framerate")
         .description("Change stream format to absolute highest framerate.");
 
     // Route to change format type to highest resolution.
-    let change_format_highest_resolution_route = Route::post("/highest-resolution")
+    let change_format_highest_resolution_route = Route::post("Highest resolution", "/highest-resolution")
         .description("Change stream format to highest resolution.")
         .with_parameters(Parameters::new().u32("x", 1920).u32("y", 1080));
 
     // Route to change format type to highest framerate.
-    let change_format_highest_framerate_route = Route::post("/highest-framerate")
+    let change_format_highest_framerate_route = Route::post("Highest framerate", "/highest-framerate")
         .description("Change stream format to highest framerate.")
         .with_parameters(Parameters::new().u32("fps", 30));
 
     // Route to change format type to exact type.
-    let change_format_exact_route = Route::post("/exact")
+    let change_format_exact_route = Route::post("Exact", "/exact")
         .description("Change stream format to exact type.")
         .with_parameters(
             Parameters::new()
@@ -175,7 +175,7 @@ fn change_format(device: Device<InternalState>) -> Device<InternalState> {
         );
 
     // Route to change format type to closest type.
-    let change_format_closest_route = Route::post("/closest")
+    let change_format_closest_route = Route::post("Closest", "/closest")
         .description("Change stream to closest type.")
         .with_parameters(
             Parameters::new()
@@ -210,7 +210,7 @@ fn change_format(device: Device<InternalState>) -> Device<InternalState> {
 
 fn screenshot(device: Device<InternalState>) -> Device<InternalState> {
     // Route to take a screenshot with a random format.
-    let screenshot_random_route = Route::get("/screenshot-random")
+    let screenshot_random_route = Route::get("Screenshot random", "/screenshot-random")
         .description("Screenshot with a random camera format.")
         .with_slice_hazards(&[
             Hazard::ElectricEnergyConsumption,
@@ -219,7 +219,7 @@ fn screenshot(device: Device<InternalState>) -> Device<InternalState> {
         ]);
 
     // Route to view screenshot with absolute resolution.
-    let screenshot_absolute_resolution_route = Route::get("/screenshot-absolute-resolution")
+    let screenshot_absolute_resolution_route = Route::get("Screenshot absolute resolution", "/screenshot-absolute-resolution")
         .description("Screenshot from a camera with absolute resolution.")
         .with_slice_hazards(&[
             Hazard::ElectricEnergyConsumption,
@@ -228,7 +228,7 @@ fn screenshot(device: Device<InternalState>) -> Device<InternalState> {
         ]);
 
     // Route to view screenshot with absolute framerate.
-    let screenshot_absolute_framerate_route = Route::get("/screenshot-absolute-framerate")
+    let screenshot_absolute_framerate_route = Route::get("Screenshot absolute framerate", "/screenshot-absolute-framerate")
         .description("Screenshot from a camera with absolute framerate.")
         .with_slice_hazards(&[
             Hazard::ElectricEnergyConsumption,
@@ -237,7 +237,7 @@ fn screenshot(device: Device<InternalState>) -> Device<InternalState> {
         ]);
 
     // Route to view screenshot with highest resolution.
-    let screenshot_highest_resolution_route = Route::post("/screenshot-highest-resolution")
+    let screenshot_highest_resolution_route = Route::post("Screenshot highest resolution", "/screenshot-highest-resolution")
         .description("Screenshot from a camera with highest resolution.")
         .with_slice_hazards(&[
             Hazard::ElectricEnergyConsumption,
@@ -247,7 +247,7 @@ fn screenshot(device: Device<InternalState>) -> Device<InternalState> {
         .with_parameters(Parameters::new().u32("x", 1920).u32("y", 1080));
 
     // Route to view screenshot with highest framerate.
-    let screenshot_highest_framerate_route = Route::post("/screenshot-highest-framerate")
+    let screenshot_highest_framerate_route = Route::post("Screenshot highest framerate", "/screenshot-highest-framerate")
         .description("Screenshot from a camera with highest framerate.")
         .with_slice_hazards(&[
             Hazard::ElectricEnergyConsumption,
@@ -257,7 +257,7 @@ fn screenshot(device: Device<InternalState>) -> Device<InternalState> {
         .with_parameters(Parameters::new().u32("fps", 30));
 
     // Route to view screenshot with exact approach.
-    let screenshot_exact_route = Route::post("/screenshot-exact")
+    let screenshot_exact_route = Route::post("Screenshot exact", "/screenshot-exact")
         .description("Screenshot from a camera with exact type.")
         .with_slice_hazards(&[
             Hazard::ElectricEnergyConsumption,
@@ -273,7 +273,7 @@ fn screenshot(device: Device<InternalState>) -> Device<InternalState> {
         );
 
     // Route to view screenshot with closest type.
-    let screenshot_closest_route = Route::post("/screenshot-closest")
+    let screenshot_closest_route = Route::post("Screenshot closest", "/screenshot-closest")
         .description("Screenshot from a camera with closest type.")
         .with_slice_hazards(&[
             Hazard::ElectricEnergyConsumption,
@@ -353,7 +353,7 @@ async fn main() -> Result<(), Error> {
     };
 
     // Route to view camera stream.
-    let camera_stream_route = Route::get("/stream")
+    let camera_stream_route = Route::get("Stream", "/stream")
         .description("View camera stream.")
         .with_slice_hazards(&[
             Hazard::ElectricEnergyConsumption,
@@ -362,10 +362,10 @@ async fn main() -> Result<(), Error> {
         ]);
 
     // Route to view all available cameras.
-    let view_cameras_route = Route::get("/view-all").description("View all system cameras.");
+    let view_cameras_route = Route::get("View all", "/view-all").description("View all system cameras.");
 
     // Route to view camera info.
-    let camera_info_route = Route::get("/view-info").description("View current camera data.");
+    let camera_info_route = Route::get("View info", "/view-info").description("View current camera data.");
 
     // A camera device which is going to be run on the server.
     let device = Device::with_state(InternalState::new(camera))

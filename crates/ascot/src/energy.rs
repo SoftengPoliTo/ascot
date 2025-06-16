@@ -343,3 +343,135 @@ impl Energy {
             && self.water_use_efficiency.is_none()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    #[cfg(feature = "alloc")]
+    use super::Energy;
+    #[cfg(feature = "alloc")]
+    use crate::collections::OutputSet;
+
+    use crate::{deserialize, serialize};
+
+    use super::{CarbonFootprint, EnergyClass, EnergyEfficiency, WaterUseEfficiency};
+
+    fn assert_float_eq(a: f64, b: f64) {
+        assert!((a - b).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_energy_class() {
+        for energy_class in &[
+            EnergyClass::APlusPlusPlus,
+            EnergyClass::APlusPlus,
+            EnergyClass::APlus,
+            EnergyClass::A,
+            EnergyClass::B,
+            EnergyClass::C,
+            EnergyClass::D,
+            EnergyClass::E,
+            EnergyClass::F,
+            EnergyClass::G,
+        ] {
+            assert_eq!(
+                deserialize::<EnergyClass>(serialize(energy_class)),
+                *energy_class
+            );
+        }
+    }
+
+    #[test]
+    fn test_energy_efficiency_serde() {
+        let energy_efficiency = EnergyEfficiency::new(100, EnergyClass::A);
+
+        assert_eq!(
+            deserialize::<EnergyEfficiency>(serialize(energy_efficiency)),
+            energy_efficiency
+        );
+    }
+
+    #[test]
+    fn test_energy_efficiency_clamping() {
+        assert_eq!(EnergyEfficiency::new(127, EnergyClass::A).percentage, 100);
+        assert_eq!(EnergyEfficiency::new(-128, EnergyClass::B).percentage, -100);
+        assert_eq!(EnergyEfficiency::new(50, EnergyClass::C).percentage, 50);
+    }
+
+    #[test]
+    fn test_energy_efficiency_decimal_percentage() {
+        assert_float_eq(
+            EnergyEfficiency::new(-50, EnergyClass::A).decimal_percentage(),
+            -0.5,
+        );
+        assert_float_eq(
+            EnergyEfficiency::new(50, EnergyClass::B).decimal_percentage(),
+            0.5,
+        );
+    }
+
+    #[test]
+    fn test_carbon_footprint_serde() {
+        let carbon_footprint = CarbonFootprint::new(100, EnergyClass::A);
+
+        assert_eq!(
+            deserialize::<CarbonFootprint>(serialize(carbon_footprint)),
+            carbon_footprint
+        );
+    }
+
+    #[test]
+    fn test_carbon_footprint_clamping() {
+        assert_eq!(CarbonFootprint::new(127, EnergyClass::A).percentage, 100);
+        assert_eq!(CarbonFootprint::new(-128, EnergyClass::B).percentage, -100);
+        assert_eq!(CarbonFootprint::new(50, EnergyClass::C).percentage, 50);
+    }
+
+    #[test]
+    fn test_carbon_footprint_decimal_percentage() {
+        assert_float_eq(
+            CarbonFootprint::new(-50, EnergyClass::A).decimal_percentage(),
+            -0.5,
+        );
+        assert_float_eq(
+            CarbonFootprint::new(50, EnergyClass::B).decimal_percentage(),
+            0.5,
+        );
+    }
+
+    #[test]
+    fn test_water_use_efficiency_serde() {
+        let water_use_efficiency = WaterUseEfficiency::init_with_gpp(2.5)
+            .penman_monteith_equation(3.2)
+            .wer(1.1);
+
+        assert_eq!(
+            deserialize::<WaterUseEfficiency>(serialize(water_use_efficiency)),
+            water_use_efficiency
+        );
+    }
+
+    #[cfg(feature = "alloc")]
+    #[test]
+    fn test_energy() {
+        let mut energy = Energy::empty();
+
+        let energy_efficiencies = OutputSet::init(EnergyEfficiency::new(-50, EnergyClass::A))
+            .insert(EnergyEfficiency::new(50, EnergyClass::B));
+
+        let carbon_footprints = OutputSet::init(CarbonFootprint::new(-50, EnergyClass::A))
+            .insert(CarbonFootprint::new(50, EnergyClass::B));
+
+        let water_use_efficiency = WaterUseEfficiency::init_with_gpp(2.5)
+            .penman_monteith_equation(3.2)
+            .wer(1.1);
+
+        assert!(energy.is_empty());
+
+        energy = energy
+            .energy_efficiencies(energy_efficiencies)
+            .carbon_footprints(carbon_footprints)
+            .water_use_efficiency(water_use_efficiency);
+
+        assert_eq!(deserialize::<Energy>(serialize(&energy)), energy);
+    }
+}

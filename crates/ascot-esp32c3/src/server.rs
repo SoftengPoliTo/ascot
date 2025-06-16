@@ -85,7 +85,7 @@ impl Server {
             };
             if let Some(body) = route.body {
                 server.fn_handler(
-                    &format!("{}{}", device_route, route.route_config.data.name),
+                    &format!("{}{}", device_route, route.route_config.data.path),
                     method,
                     move |req| {
                         // Run body.
@@ -96,7 +96,7 @@ impl Server {
                     },
                 )?;
             } else {
-                server.fn_handler(&route.route_config.data.name, method, move |req| {
+                server.fn_handler(&route.route_config.data.path, method, move |req| {
                     // Write only response.
                     (route.response)(req)?.write_all(route.content.as_bytes())
                 })?;

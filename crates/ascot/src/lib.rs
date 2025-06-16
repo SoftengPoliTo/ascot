@@ -32,6 +32,8 @@
 #[cfg(feature = "alloc")]
 extern crate alloc;
 
+mod macros;
+
 /// All methods to interact with an action.
 pub mod actions;
 /// All data collections.
