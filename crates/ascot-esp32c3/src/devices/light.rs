@@ -10,6 +10,9 @@ const LIGHT_MAIN_ROUTE: &str = "/light";
 // Allowed hazards.
 const ALLOWED_HAZARDS: &[Hazard] = &[Hazard::FireHazard, Hazard::ElectricEnergyConsumption];
 
+// Number of mandatory routes.
+const MANDATORY_ROUTES: u8 = 2;
+
 /// A smart home light.
 ///
 /// The default server main route for a light is `light`.
@@ -23,11 +26,15 @@ pub struct Light {
     device: Device,
     // Allowed light hazards.
     allowed_hazards: &'static [Hazard],
+    // Number of mandatory routes.
+    mandatory_routes: u8,
 }
 
 impl DeviceBuilder for Light {
     fn into_device(self) -> Device {
-        self.device.main_route(self.main_route)
+        self.device
+            .main_route(self.main_route)
+            .mandatory_routes(self.mandatory_routes)
     }
 }
 
@@ -44,6 +51,7 @@ impl Light {
             main_route: LIGHT_MAIN_ROUTE,
             device,
             allowed_hazards: ALLOWED_HAZARDS,
+            mandatory_routes: MANDATORY_ROUTES,
         }
     }
 
