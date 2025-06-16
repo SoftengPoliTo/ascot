@@ -106,6 +106,8 @@ pub struct DeviceData {
     pub main_route: Cow<'static, str>,
     /// All device route configurations.
     pub route_configs: RouteConfigs,
+    /// Number of mandatory routes.
+    pub mandatory_routes: u8
 }
 
 #[cfg(feature = "alloc")]
@@ -117,6 +119,7 @@ impl DeviceData {
         environment: DeviceEnvironment,
         main_route: impl Into<Cow<'static, str>>,
         route_configs: RouteConfigs,
+        mandatory_routes: u8
     ) -> Self {
         Self {
             kind,
@@ -124,6 +127,7 @@ impl DeviceData {
             description: None,
             main_route: main_route.into(),
             route_configs,
+            mandatory_routes
         }
     }
 
