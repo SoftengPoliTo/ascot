@@ -1,4 +1,3 @@
-use alloc::borrow::Cow;
 use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "alloc")]
@@ -93,21 +92,21 @@ impl DeviceInfo {
 
 /// Device data.
 #[cfg(feature = "alloc")]
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct DeviceData {
     /// Device kind.
     pub kind: DeviceKind,
     /// Device environment.
     pub environment: DeviceEnvironment,
     /// Device description.
-    pub description: Option<Cow<'static, str>>,
+    pub description: Option<alloc::borrow::Cow<'static, str>>,
     /// Device main route.
     #[serde(rename = "main route")]
-    pub main_route: Cow<'static, str>,
+    pub main_route: alloc::borrow::Cow<'static, str>,
     /// All device route configurations.
     pub route_configs: RouteConfigs,
     /// Number of mandatory routes.
-    pub mandatory_routes: u8
+    pub mandatory_routes: u8,
 }
 
 #[cfg(feature = "alloc")]
@@ -117,9 +116,9 @@ impl DeviceData {
     pub fn new(
         kind: DeviceKind,
         environment: DeviceEnvironment,
-        main_route: impl Into<Cow<'static, str>>,
+        main_route: impl Into<alloc::borrow::Cow<'static, str>>,
         route_configs: RouteConfigs,
-        mandatory_routes: u8
+        mandatory_routes: u8,
     ) -> Self {
         Self {
             kind,
@@ -127,14 +126,119 @@ impl DeviceData {
             description: None,
             main_route: main_route.into(),
             route_configs,
-            mandatory_routes
+            mandatory_routes,
         }
     }
 
     /// Sets the device description.
     #[must_use]
-    pub fn description(mut self, description: impl Into<Cow<'static, str>>) -> Self {
+    pub fn description(mut self, description: impl Into<alloc::borrow::Cow<'static, str>>) -> Self {
         self.description = Some(description.into());
         self
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[cfg(feature = "alloc")]
+    use super::{DeviceData, DeviceInfo};
+    #[cfg(feature = "alloc")]
+    use crate::collections::OutputSet;
+    #[cfg(feature = "alloc")]
+    use crate::economy::Economy;
+    #[cfg(feature = "alloc")]
+    use crate::energy::Energy;
+    #[cfg(feature = "alloc")]
+    use crate::route::{Route, RouteConfigs};
+
+    use crate::economy::{Cost, CostTimespan, Roi};
+    use crate::energy::{CarbonFootprint, EnergyClass, EnergyEfficiency, WaterUseEfficiency};
+    use crate::{deserialize, serialize};
+
+    use super::{DeviceEnvironment, DeviceKind};
+
+    #[cfg(feature = "alloc")]
+    fn energy() -> Energy {
+        let energy_efficiencies = OutputSet::init(EnergyEfficiency::new(-50, EnergyClass::A))
+            .insert(EnergyEfficiency::new(50, EnergyClass::B));
+
+        let carbon_footprints = OutputSet::init(CarbonFootprint::new(-50, EnergyClass::A))
+            .insert(CarbonFootprint::new(50, EnergyClass::B));
+
+        let water_use_efficiency = WaterUseEfficiency::init_with_gpp(2.5)
+            .penman_monteith_equation(3.2)
+            .wer(1.1);
+
+        Energy::init_with_energy_efficiencies(energy_efficiencies)
+            .carbon_footprints(carbon_footprints)
+            .water_use_efficiency(water_use_efficiency)
+    }
+
+    #[cfg(feature = "alloc")]
+    fn economy() -> Economy {
+        let costs = OutputSet::init(Cost::new(100, CostTimespan::Week))
+            .insert(Cost::new(1000, CostTimespan::Month));
+
+        let roi =
+            OutputSet::init(Roi::new(10, EnergyClass::A)).insert(Roi::new(20, EnergyClass::B));
+
+        Economy::init_with_costs(costs).roi(roi)
+    }
+
+    #[cfg(feature = "alloc")]
+    fn routes() -> RouteConfigs {
+        OutputSet::init(Route::put("On", "/on").serialize_data())
+            .insert(Route::put("Off", "/off").serialize_data())
+    }
+
+    #[test]
+    fn test_device_kind() {
+        for device_kind in &[DeviceKind::Unknown, DeviceKind::Light, DeviceKind::Camera] {
+            assert_eq!(
+                deserialize::<DeviceKind>(serialize(device_kind)),
+                *device_kind
+            );
+        }
+    }
+
+    #[test]
+    fn test_device_environment() {
+        for device_environment in &[DeviceEnvironment::Os, DeviceEnvironment::Esp32] {
+            assert_eq!(
+                deserialize::<DeviceEnvironment>(serialize(device_environment)),
+                *device_environment
+            );
+        }
+    }
+
+    #[cfg(feature = "alloc")]
+    #[test]
+    fn test_device_info() {
+        let mut device_info = DeviceInfo::empty();
+
+        device_info = device_info.add_energy(energy()).add_economy(economy());
+
+        assert_eq!(
+            deserialize::<DeviceInfo>(serialize(&device_info)),
+            device_info
+        );
+    }
+
+    #[cfg(feature = "alloc")]
+    #[test]
+    fn test_device_data() {
+        let device_data = DeviceData::new(
+            DeviceKind::Light,
+            DeviceEnvironment::Os,
+            "/light",
+            routes(),
+            2,
+        )
+        .description("A light device.");
+
+        assert_eq!(
+            deserialize::<DeviceData>(serialize(&device_data)),
+            device_data
+        );
     }
 }
