@@ -118,6 +118,8 @@ jobs:
     env:
       RUSTFLAGS: "-Cinstrument-coverage"
       LLVM_PROFILE_FILE: "ascot-%p-%m.profraw"
+      # Marks this environment as CI so certain tests can be conditionally skipped.
+      CI: true
 
     steps:
       - uses: actions/checkout@v4
