@@ -4,8 +4,32 @@ use ascot::device::{DeviceData, DeviceEnvironment, DeviceKind};
 use ascot::hazards::Hazard;
 use ascot::route::{Route, RouteConfig, RouteConfigs};
 
+use esp_idf_svc::hal::sys::{
+    ESP_OK, esp_mac_type_t_ESP_MAC_ETH, esp_mac_type_t_ESP_MAC_WIFI_STA, esp_read_mac,
+};
 use esp_idf_svc::http::server::{EspHttpConnection, Request, Response};
 use esp_idf_svc::io::EspIOError;
+
+use log::warn;
+
+// Retrieves Wi-Fi and Ethernet MAC addresses.
+fn get_mac_addresses() -> (Option<[u8; 6]>, Option<[u8; 6]>) {
+    let mut wifi_mac = [0u8; 6];
+    let mut ethernet_mac = [0u8; 6];
+
+    // SAFETY: esp_read_mac writes MAC address to valid mutable buffer pointers.
+    let wifi_ok =
+        unsafe { esp_read_mac(wifi_mac.as_mut_ptr(), esp_mac_type_t_ESP_MAC_WIFI_STA) == ESP_OK };
+
+    // SAFETY: esp_read_mac writes MAC address to valid mutable buffer pointers.
+    let ethernet_ok =
+        unsafe { esp_read_mac(ethernet_mac.as_mut_ptr(), esp_mac_type_t_ESP_MAC_ETH) == ESP_OK };
+
+    (
+        wifi_ok.then_some(wifi_mac),
+        ethernet_ok.then_some(ethernet_mac),
+    )
+}
 
 // Default main route for a device.
 const DEFAULT_MAIN_ROUTE: &str = "/device";
@@ -145,6 +169,11 @@ impl Device {
             route_configs.add(route_data.route_config.clone());
         }
 
+        let (wifi_mac, ethernet_mac) = get_mac_addresses();
+        if wifi_mac.is_none() && ethernet_mac.is_none() {
+            warn!("Unable to retrieve Wi-Fi or Ethernet MAC address.");
+        }
+
         (
             self.main_route,
             DeviceData::new(
@@ -152,6 +181,8 @@ impl Device {
                 DeviceEnvironment::Esp32,
                 self.main_route,
                 route_configs,
+                wifi_mac,
+                ethernet_mac,
             ),
             self.routes_data,
         )

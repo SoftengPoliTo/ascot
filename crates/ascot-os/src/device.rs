@@ -3,9 +3,10 @@ use ascot::route::RouteConfigs;
 
 use axum::Router;
 
-use tracing::info;
+use tracing::{info, warn};
 
 use crate::actions::DeviceAction;
+use crate::mac::get_mac_addresses;
 
 // Default main route for a device.
 const DEFAULT_MAIN_ROUTE: &str = "/device";
@@ -93,6 +94,11 @@ where
     }
 
     pub(crate) fn finalize(self) -> (&'static str, DeviceData, Router) {
+        let (wifi_mac, ethernet_mac) = get_mac_addresses();
+        if wifi_mac.is_none() && ethernet_mac.is_none() {
+            warn!("Unable to retrieve Wi-Fi or Ethernet MAC address.");
+        }
+
         for route in &self.route_configs {
             info!(
                 "Device route: [{}, \"{}{}\"]",
@@ -107,6 +113,8 @@ where
                 DeviceEnvironment::Os,
                 self.main_route,
                 self.route_configs,
+                wifi_mac,
+                ethernet_mac,
             ),
             self.router,
         )

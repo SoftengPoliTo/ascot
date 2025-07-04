@@ -222,6 +222,13 @@ impl Discovery {
                     Ok(response) => {
                         let device_data: DeviceData = response.json().await?;
 
+                        if device_data.wifi_mac.is_none() && device_data.ethernet_mac.is_none() {
+                            warn!(
+                                "Device ignored because it does not have valid MAC addresses: {complete_address}"
+                            );
+                            continue;
+                        }
+
                         let requests = create_requests(
                             device_data.route_configs,
                             &complete_address,
@@ -296,6 +303,8 @@ impl Discovery {
 pub(crate) mod tests {
     use std::time::Duration;
 
+    use tracing::warn;
+
     use serial_test::serial;
 
     use crate::tests::{
@@ -323,15 +332,42 @@ pub(crate) mod tests {
         }
     }
 
+    async fn test_discovery<F, Fut>(name: &str, function: F)
+    where
+        F: FnOnce() -> Fut,
+        Fut: Future<Output = ()>,
+    {
+        if option_env!("CI").is_some() {
+            warn!(
+                "{} discovery test skipped in CI: expected to run on systems exposing physical MAC addresses.",
+                name
+            );
+        } else {
+            function().await;
+        }
+    }
+
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     #[serial]
     async fn test_single_device_discovery() {
-        check_function_with_device(async move || discovery_comparison(1).await).await;
+        test_discovery("Single device", || async {
+            check_function_with_device(|| async {
+                discovery_comparison(1).await;
+            })
+            .await;
+        })
+        .await;
     }
 
     #[tokio::test(flavor = "multi_thread", worker_threads = 3)]
     #[serial]
     async fn test_more_devices_discovery() {
-        check_function_with_two_devices(async move || discovery_comparison(2).await).await;
+        test_discovery("More devices", || async {
+            check_function_with_two_devices(|| async {
+                discovery_comparison(2).await;
+            })
+            .await;
+        })
+        .await;
     }
 }

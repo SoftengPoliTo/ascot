@@ -35,7 +35,7 @@
 //! An `std` environment is mandatory to make a full usage of the provided
 //! functionalities.
 
-#![forbid(unsafe_code)]
+#![deny(unsafe_code)]
 #![deny(missing_docs)]
 
 /// All device kinds implementable in a firmware.
@@ -60,3 +60,5 @@ pub mod extract {
 }
 
 mod services;
+
+mod mac;

@@ -103,6 +103,12 @@ pub struct DeviceData {
     pub main_route: alloc::borrow::Cow<'static, str>,
     /// All device route configurations.
     pub route_configs: RouteConfigs,
+    /// Wi-Fi MAC address.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub wifi_mac: Option<[u8; 6]>,
+    /// Ethernet MAC address.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ethernet_mac: Option<[u8; 6]>,
 }
 
 #[cfg(feature = "alloc")]
@@ -114,12 +120,16 @@ impl DeviceData {
         environment: DeviceEnvironment,
         main_route: impl Into<alloc::borrow::Cow<'static, str>>,
         route_configs: RouteConfigs,
+        wifi_mac: Option<[u8; 6]>,
+        ethernet_mac: Option<[u8; 6]>,
     ) -> Self {
         Self {
             kind,
             environment,
             main_route: main_route.into(),
             route_configs,
+            wifi_mac,
+            ethernet_mac,
         }
     }
 }

@@ -38,6 +38,9 @@ tokio-util.version = "0.7"
 tokio-util.default-features = false
 tokio-util.features = ["io"]
 
+windows-sys.version = "0.60.2"
+windows-sys.features = ["Win32_NetworkManagement_IpHelper", "Win32_Foundation", "Win32_Networking_WinSock", "Win32_NetworkManagement_Ndis"]
+
 [dev-dependencies]
 async-lock.version = "3.3"
 async-lock.default-features = false
