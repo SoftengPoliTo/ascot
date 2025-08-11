@@ -4,17 +4,19 @@ use indexmap::set::{IndexSet, IntoIter, Iter};
 
 use serde::{Deserialize, Serialize};
 
+use hashbrown::DefaultHashBuilder;
+
 /// A set of elements for internal storage.
 #[derive(Debug, Clone)]
-pub struct Set<V: Eq + Hash>(IndexSet<V>);
+pub struct Set<V: Eq + Hash>(IndexSet<V, DefaultHashBuilder>);
 
 /// A serializable set of elements.
 #[derive(Debug, Clone, Serialize)]
-pub struct SerialSet<V: Eq + Hash>(IndexSet<V>);
+pub struct SerialSet<V: Eq + Hash>(IndexSet<V, DefaultHashBuilder>);
 
 /// A serializable and deserializable set of elements.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct OutputSet<V: Eq + Hash>(IndexSet<V>);
+pub struct OutputSet<V: Eq + Hash>(IndexSet<V, DefaultHashBuilder>);
 
 macro_rules! from_set {
     ($for:ident) => {

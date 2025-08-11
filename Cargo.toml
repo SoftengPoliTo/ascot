@@ -5,7 +5,7 @@ members = [
     "crates/ascot-os",
     "crates/ascot-stack"
 ]
-exclude = ["crates/ascot-esp32c3"]
+exclude = ["crates/ascot-esp32c3", "crates/no-std"]
 resolver = "2"
 
 [workspace.dependencies]

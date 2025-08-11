@@ -16,7 +16,10 @@ serde.features = ["derive"]
 serde_json.workspace = true
 serde_json.features = ["alloc"]
 
+hashbrown.version = "0.15"
+hashbrown.default-features = false
+hashbrown.features = ["default-hasher"]
+
 [features]
-# Preserve_order feature is mandatory and necessary for indexmap.
-alloc = ["indexmap/serde", "serde_json/preserve_order"]
+alloc = ["indexmap/serde"]
 default = ["alloc"]
