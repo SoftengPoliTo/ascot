@@ -1,5 +1,7 @@
 #![no_std]
 // #![feature(impl_trait_in_assoc_type)]
+#![feature(type_alias_impl_trait)]
+#![feature(impl_trait_in_assoc_type)]
 
 extern crate alloc;
 
@@ -13,7 +15,7 @@ pub mod mdns;
 pub mod server;
 pub mod mqtt;
 
-pub use picoserve::routing::{get, post, put, delete};
+pub use picoserve::routing::{get, post, put, delete, parse_path_segment};
 
 macro_rules! mk_static {
     ($t:ty,$val:expr) => {{

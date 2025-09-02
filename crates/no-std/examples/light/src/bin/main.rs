@@ -8,6 +8,9 @@
     holding buffers for the duration of a data transfer."
 )]
 
+use core::future::Future;
+
+use alloc::{format, string::String};
 use esp_hal::clock::CpuClock;
 use esp_hal::timer::systimer::SystemTimer;
 use esp_hal::timer::timg::TimerGroup;
@@ -20,7 +23,7 @@ use embassy_executor::Spawner;
 
 use embassy_time::{Duration, Timer};
 
-use no_std::wifi::Wifi;
+use no_std::{server::{MyAppBuilder}, wifi::Wifi};
 
 
 #[panic_handler]
@@ -85,10 +88,10 @@ async fn main(spawner: Spawner) {
     let ip = no_std::net::get_ip(stack).await;
     info!("Got IP Address: {}", ip);
 
-    let mdns = no_std::mdns::Mdns::new();
-    spawner.spawn(no_std::mdns::run_mdns_task(mdns, stack, rng)).ok();
+    // let mdns = no_std::mdns::Mdns::new();
+    // spawner.spawn(no_std::mdns::run_mdns_task(mdns, stack, rng)).ok();
 
-    info!("After MDNS Spawn");
+    // info!("After MDNS Spawn");
 
     //////// Server /////
     let app_hello = mk_static!(AppRouter<AppPropsHello>, AppPropsHello.build_app());
@@ -103,15 +106,87 @@ async fn main(spawner: Spawner) {
         .keep_connection_alive()
     );
 
-    for id in 0..WEB_TASK_POOL_SIZE {
-        spawner.must_spawn(web_task_hello(1, stack, app_hello, config));
-    }
-    /////////////////////
+    // for id in 0..WEB_TASK_POOL_SIZE {
+    //     spawner.must_spawn(web_task_hello(1, stack, app_hello, config));
+    // }
+    // log::info!("DEBUG 1");
 
-    let mut mqtt = no_std::mqtt::Mqtt::new(stack, no_std::mqtt::Broker::url("broker.mqtt.cool", 1883)).await;
-    mqtt.connect().await.expect("Unable to connect to the broker");
+    // let my_app = mk_static!(no_std::server::MyAppRouter<MyAppPropsHello>, no_std::server::MyAppBuilder::build_app(MyAppPropsHello));
+    let my_app = no_std::server::MyRouter::new().route("/hello", get(|| async move {
+            log::info!("Received GET /hello");
+            "Hello!"
+    }))
+    .route("/world", no_std::put(|| async move {
+            log::info!("Received GET /hello");
+            "Hello!"
+    }))
+    .route(("/add", picoserve::routing::parse_path_segment::<u32>(), "/with", picoserve::routing::parse_path_segment::<u32>()), no_std::get(|input: (u32, u32)| async move {
+            log::info!("{} + {} = {}", input.0, input.1, input.0 + input.1);
+            "Add"
+    }));
+    let my_app = my_app.build_app();
 
-    mqtt.publish("ascot/topic/test", "Ciao da Ascot 3".as_bytes()).await.expect("Unable to post the message");
+    // spawner.must_spawn(web_task(1, stack, my_app, config));
+
+    // let config = mk_static!(
+    //     picoserve::Config<Duration>,
+    //     picoserve::Config::new(picoserve::Timeouts {
+    //         start_read_request: Some(Duration::from_secs(5)),
+    //         persistent_start_read_request: Some(Duration::from_secs(1)),
+    //         read_request: Some(Duration::from_secs(1)),
+    //         write: Some(Duration::from_secs(1)),
+    //     })
+    //     .keep_connection_alive()
+    // );
+
+    // let router = no_std::server::Router::new();
+    // let router = router
+    //     .route("hello", no_std::get(|| async move { "Hello" }))
+    //     .route("world", no_std::get(|| async move { "World" }))
+    //     .route(("print", no_std::parse_path_segment::<u32>(), "and", no_std::parse_path_segment::<u32>()), crate::get(|params: (u32, u32)| async move { 
+    //         log::info!("Print {} and {}", params.0, params.1);
+    //         "" 
+    //     }));
+    // let app = mk_static!(AppRouter<no_std::Router>, router.router());
+
+    // for id in 0..WEB_TASK_POOL_SIZE {
+    //     spawner.must_spawn(web_task(id, stack, app, config));
+    // }
+
+    // log::info!("About to run the server");
+
+    // let router = picoserve::routing::Router::new();
+    // let router = router
+    //     .route("hello", picoserve::routing::get(|| async move { "Hello" }))
+    //     .route("world", picoserve::routing::get(|| async move { "World" }))
+    //     .route(("print", picoserve::routing::parse_path_segment::<u32>(), "and", no_std::parse_path_segment::<u32>()), crate::get(|params: (u32, u32)| async move { 
+    //         log::info!("Print {} and {}", params.0, params.1);
+    //         "" 
+    //     }));
+
+    // let webt = web_task(0, stack, router, config);
+
+    log::info!("ROUTER BUILT");
+    
+    // picoserve::listen_and_serve(
+    //     0,
+    //     &router,
+    //     &config,
+    //     stack,
+    //     port,
+    //     &mut tcp_rx_buffer,
+    //     &mut tcp_tx_buffer,
+    //     &mut http_buffer,
+    // )
+    // .await;
+
+    log::info!("AFTER SERVER START");
+
+    // let mut mqtt = no_std::mqtt::Mqtt::new(stack, no_std::mqtt::Broker::url("broker.mqtt.cool", 1883)).await;
+    // mqtt.connect().await.expect("Unable to connect to the broker");
+
+    // mqtt.publish("ascot/topic/test", "Ciao da Ascot 3".as_bytes()).await.expect("Unable to post the message");
+    // log::info!("Messaggio MQTT Pubblicato");
 }
 
 //////////////////////////////// SERVER ///////////////////////////////
@@ -119,15 +194,26 @@ use picoserve::{routing::get, AppBuilder, AppRouter};
 
 struct AppPropsHello;
 
+impl AppPropsHello {
+    pub fn new() -> Self {
+        AppPropsHello { }
+    }
+    
+    pub fn foo(&self, value: usize) -> usize {
+        value
+    }
+}
+
 impl AppBuilder for AppPropsHello {
     type PathRouter = impl picoserve::routing::PathRouter;
 
     fn build_app(self) -> picoserve::Router<Self::PathRouter> {
-        // picoserve::Router::new().route("/hello", get(|| async move {
-        //     log::info!("Received GET /hello");
-        //     "Hello!"
-        // }))
-        picoserve::Router::new()
+        let r = picoserve::Router::new().route("/hello", get(|| async move {
+            log::info!("Received GET /hello");
+            "Hello!"
+        }));
+
+        r
     }
 }
 
@@ -145,7 +231,78 @@ async fn web_task_hello(
     let mut tcp_tx_buffer = [0; 1024];
     let mut http_buffer = [0; 2048];
 
-    picoserve::listen_and_serve(
+    let r = picoserve::listen_and_serve(
+        id,
+        app,
+        config,
+        stack,
+        port,
+        &mut tcp_rx_buffer,
+        &mut tcp_tx_buffer,
+        &mut http_buffer,
+    )
+    .await;
+}
+
+// #[embassy_executor::task(pool_size = WEB_TASK_POOL_SIZE)]
+// async fn web_task(
+//     id: usize,
+//     stack: embassy_net::Stack<'static>,
+//     app: &'static AppRouter<no_std::server::Router>,
+//     config: &'static picoserve::Config<Duration>,
+// ) -> ! {
+//     let port = 80;
+//     let mut tcp_rx_buffer = [0; 1024];
+//     let mut tcp_tx_buffer = [0; 1024];
+//     let mut http_buffer = [0; 2048];
+
+//     picoserve::listen_and_serve(
+//         id,
+//         app,
+//         config,
+//         stack,
+//         port,
+//         &mut tcp_rx_buffer,
+//         &mut tcp_tx_buffer,
+//         &mut http_buffer,
+//     )
+//     .await
+// }
+
+struct MyAppPropsHello;
+
+impl no_std::server::MyAppBuilder for MyAppPropsHello {
+    type PathRouter = impl picoserve::routing::PathRouter;
+
+    fn build_app(self) -> no_std::server::MyRouter<Self::PathRouter> {
+        no_std::server::MyRouter::new().route("/hello", no_std::get(|| async move {
+            log::info!("Received GET /hello");
+            "Hello!"
+        }))
+        .route("/world", no_std::get(|| async move {
+            log::info!("Received GET /hello");
+            "Hello!"
+        }))
+        .route(("/add", picoserve::routing::parse_path_segment::<u32>(), "/with", picoserve::routing::parse_path_segment::<u32>()), no_std::get(|input: (u32, u32)| async move {
+            log::info!("{} + {} = {}", input.0, input.1, input.0 + input.1);
+            "Add"
+        }))
+    }
+}
+
+#[embassy_executor::task]
+async fn web_task(
+    id: usize,
+    stack: embassy_net::Stack<'static>,
+    app: no_std::server::MyAppRouter<MyAppPropsHello>,
+    config: &'static picoserve::Config<Duration>,
+) -> ! {
+    let port = 80;
+    let mut tcp_rx_buffer = [0; 1024];
+    let mut tcp_tx_buffer = [0; 1024];
+    let mut http_buffer = [0; 2048];
+
+    no_std::server::listen_and_serve(
         id,
         app,
         config,
