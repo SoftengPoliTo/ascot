@@ -1,4 +1,26 @@
+#[toml_cfg::toml_config]
+pub struct DeviceConfig {
+    #[default("")]
+    ssid: &'static str,
+    #[default("")]
+    password: &'static str,
+}
+
 fn main() {
+    let cfg = std::path::Path::new("cfg.toml");
+
+    // Checks whether device configuration exists
+    assert!(
+        cfg.exists(),
+        "A `cfg.toml` file with Wi-Fi credentials is required! Use `cfg.toml.example` as a template."
+    );
+
+    let device_config = DEVICE_CONFIG;
+    assert!(
+        !device_config.ssid.trim().is_empty() || !device_config.password.trim().is_empty(),
+        "All config fields should be set in `cfg.toml` file!"
+    );
+
     linker_be_nice();
     // make sure linkall.x is the last linker script (otherwise might cause problems with flip-link)
     println!("cargo:rustc-link-arg=-Tlinkall.x");

@@ -9,13 +9,13 @@ pub mod devices;
 
 pub mod device;
 pub mod error;
-pub mod wifi;
-pub mod net;
 pub mod mdns;
-pub mod server;
 pub mod mqtt;
+pub mod net;
+pub mod server;
+pub mod wifi;
 
-pub use picoserve::routing::{get, post, put, delete, parse_path_segment};
+pub use picoserve::routing::{delete, get, parse_path_segment, post, put};
 
 macro_rules! mk_static {
     ($t:ty,$val:expr) => {{

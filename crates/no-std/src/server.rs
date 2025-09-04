@@ -1,180 +1,248 @@
-use core::fmt::Display;
-use core::{future::Future, marker::PhantomData, pin::Pin};
+use core::{future::Future, pin::Pin};
 
-use alloc::string::String;
-// src/server.rs
-use alloc::vec::Vec;
-use alloc::{boxed::Box, vec};
+use alloc::boxed::Box;
 
 use embassy_executor::Spawner;
 use embassy_net::Stack;
 use embassy_time::Duration;
-use embedded_io_async::Read;
-use picoserve::response::IntoResponse;
-use picoserve::routing::{
-    MethodHandler, MethodNotAllowed, MethodRouter, NotFound, RequestHandler, RequestHandlerFunction
-};
-use picoserve::{AppBuilder, AppRouter};
 use picoserve::{
-    request::Request,
-    response::ResponseWriter,
-    routing::{IntoPathParameterList, PathDescription, PathRouter, Router},
-    ResponseSent,
+    listen_and_serve,
+    routing::{NoPathParameters, PathRouter, Router},
+    Config, KeepAlive, Timeouts,
 };
 
+use log::info;
+
+use crate::device::Device;
+use crate::error::Result;
+use crate::mdns::Mdns;
 use crate::mk_static;
+use crate::net::get_ip;
 
-// pub fn foo<State, PathParameters, T, Handler: RequestHandlerFunction<State, PathParameters, T>, R: IntoResponse>(
-//     handler: Handler,
-// ) -> R {
-//     let r = handler();
-//     r
-// }
+// We cannot use Send because internal structures of Stack does not implement
+// that. The same goes for Sync. The function is an FnOnce because it needs
+// to be called just one time inside, otherwise there are some problems with
+// Fn and FnMut.
+type ServerTaskFn = Box<dyn Fn() -> Pin<Box<dyn Future<Output = ()> + 'static>> + 'static>;
 
-// fn example(routes: Vec<bool>) -> Router<impl PathRouter> {
-
-//     Get(&'static str, Box<dyn RequestHandlerFunction<State, (), String> + Send + Sync>),
-//     Post(&'static str, Box<dyn RequestHandlerFunction<State, (), String> + Send + Sync>),
-//     // Put, Delete ecc.
-// }
-
-enum Method {
-    Get,
-    Post,
-    Put,
-    Delete,
-}
-
-struct Route {
-    method: Method,
-    path: &'static str,
-}
-
-impl Route {
-    pub fn get(path: &'static str) -> Self {
-        Self {
-            method: Method::Get,
-            path
+macro_rules! web_task {
+    ($pool_size_ident:ident, $pool_size_value:tt) => {
+        #[embassy_executor::task(pool_size = $pool_size_value)]
+        async fn $pool_size_ident(server_task: ServerTaskFn) {
+            let leak_task = Box::leak(server_task);
+            leak_task().await
         }
-    }
-
-    pub fn post(path: &'static str) -> Self {
-        Self {
-            method: Method::Get,
-            path
-        }
-    }
-
-    pub fn put(path: &'static str) -> Self {
-        Self {
-            method: Method::Put,
-            path
-        }
-    }
-
-    pub fn delete(path: &'static str) -> Self {
-        Self {
-            method: Method::Delete,
-            path
-        }
-    }
+    };
 }
 
-pub struct MyRouter<
-    PR: PathRouter<State, CurrentPathParameters>,
-    State = (),
-    CurrentPathParameters = picoserve::routing::NoPathParameters,
-> {
-    routes: Vec<Route>,
-    router: Router<PR, State, CurrentPathParameters>,
-}
+web_task!(web_task1, 1);
+web_task!(web_task2, 2);
+web_task!(web_task3, 3);
+web_task!(web_task4, 4);
+web_task!(web_task5, 5);
+web_task!(web_task6, 6);
+web_task!(web_task7, 7);
+web_task!(web_task8, 8);
 
-impl MyRouter<picoserve::routing::NotFound, (), picoserve::routing::NoPathParameters> {
-    pub fn new() -> Self {
-        Self {
-            routes: Vec::new(),
-            router: Router::new(),
-        }
-    }
-}
-
-impl<PR: PathRouter<State, CurrentPathParameters>, State, CurrentPathParameters>
-    MyRouter<PR, State, CurrentPathParameters>
-{
-    pub fn route<PD: picoserve::routing::PathDescription<CurrentPathParameters>>(
-        self,
-        path_description: PD,
-        handler: impl picoserve::routing::MethodHandler<State, PD::Output>,
-    ) -> MyRouter<impl PathRouter<State, CurrentPathParameters>, State, CurrentPathParameters> {
-        let new_router = self.router.route(path_description, handler);
-
-        MyRouter {
-            routes: self.routes,
-            router: new_router,
-        }
-    }
-
-    pub fn router(
-        self,
-    ) -> Router<impl PathRouter<State, CurrentPathParameters>, State, CurrentPathParameters> {
-        self.router
-    }
-}
-
-// TODO: Fix
-impl<PR: PathRouter<(), picoserve::routing::NoPathParameters>> AppBuilder for MyRouter<PR> {
-    type PathRouter = impl picoserve::routing::PathRouter;
-
-    fn build_app(self) -> picoserve::Router<Self::PathRouter> {
-        self.router
-    }
-}
-
-pub trait MyAppBuilder {
-    type PathRouter: picoserve::routing::PathRouter;
-
-    fn build_app(self) -> MyRouter<Self::PathRouter>;
-}
-
-pub trait MyAppWithStateBuilder {
-    type State;
-    type PathRouter: picoserve::routing::PathRouter<Self::State>;
-
-    fn build_app(self) -> MyRouter<Self::PathRouter, Self::State>;
-}
-
-impl<T: MyAppBuilder> MyAppWithStateBuilder for T {
-    type State = ();
-    type PathRouter = <Self as MyAppBuilder>::PathRouter;
-
-    fn build_app(self) -> MyRouter<Self::PathRouter, Self::State> {
-        <Self as MyAppBuilder>::build_app(self)
-    }
-}
-
-pub type MyAppRouter<Props> =
-    MyRouter<<Props as MyAppWithStateBuilder>::PathRouter, <Props as MyAppWithStateBuilder>::State>;
-
-pub async fn listen_and_serve<P: picoserve::routing::PathRouter<()>>(
-    task_id: impl picoserve::LogDisplay,
-    app: MyRouter<P, ()>,
-    config: &picoserve::Config<embassy_time::Duration>,
-    stack: embassy_net::Stack<'_>,
+#[allow(clippy::similar_names)]
+async fn internal_server_run(
+    id: usize,
+    stack: Stack<'static>,
+    app: &'static Router<impl PathRouter>,
+    config: &'static Config<Duration>,
     port: u16,
-    tcp_rx_buffer: &mut [u8],
-    tcp_tx_buffer: &mut [u8],
-    http_buffer: &mut [u8],
-) -> ! {
-    picoserve::listen_and_serve_with_state(
-        task_id,
-        &app.router(),
+) {
+    let mut tcp_rx_buffer = [0; 1024];
+    let mut tcp_tx_buffer = [0; 1024];
+    let mut http_buffer = [0; 2048];
+
+    listen_and_serve(
+        id,
+        app,
         config,
         stack,
         port,
-        tcp_rx_buffer,
-        tcp_tx_buffer,
-        http_buffer,
-        &(),
+        &mut tcp_rx_buffer,
+        &mut tcp_tx_buffer,
+        &mut http_buffer,
     )
-    .await
+    .await;
+}
+
+/// Server configuration.
+pub struct ServerConfig(Config<Duration>);
+
+impl Default for ServerConfig {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl ServerConfig {
+    /// Creates a [`ServerConfig`].
+    #[must_use]
+    pub const fn new() -> Self {
+        Self(Config {
+            timeouts: Timeouts {
+                start_read_request: None,
+                persistent_start_read_request: None,
+                read_request: None,
+                write: None,
+            },
+            connection: KeepAlive::KeepAlive,
+        })
+    }
+
+    /// Adds the duration of time to wait when starting to read the
+    /// first request before the connection is closed due to inactivity.
+    #[must_use]
+    pub const fn start_read_request(mut self, duration_of_time: Duration) -> Self {
+        self.0.timeouts.start_read_request = Some(duration_of_time);
+        self
+    }
+
+    /// Adds the duration of time to wait when starting to read persistent
+    /// (i.e. not the first) requests before the connection is closed
+    /// due to inactivity.
+    #[must_use]
+    pub const fn persistent_start_read_request(mut self, duration_of_time: Duration) -> Self {
+        self.0.timeouts.persistent_start_read_request = Some(duration_of_time);
+        self
+    }
+
+    /// Adds the duration of time to wait when partway reading a request before
+    /// the connection is aborted and closed.
+    #[must_use]
+    pub const fn read_request(mut self, duration_of_time: Duration) -> Self {
+        self.0.timeouts.read_request = Some(duration_of_time);
+        self
+    }
+
+    /// Adds the duration of time to wait when writing the response before
+    /// the connection is aborted and closed.
+    #[must_use]
+    pub const fn write(mut self, duration_of_time: Duration) -> Self {
+        self.0.timeouts.write = Some(duration_of_time);
+        self
+    }
+
+    /// Sets a parameter to keep the connection alive after
+    /// the response has been sent, allowing the client to make further requests
+    /// on the same TCP connection. This should only be called if
+    /// multiple sockets are handling HTTP connections to avoid a single client
+    /// hogging the connection and preventing other clients
+    /// from making requests.
+    #[must_use]
+    pub const fn keep_connection_alive(self) -> Self {
+        Self(self.0.keep_connection_alive())
+    }
+
+    /// Sets a parameter to close the connection after
+    /// the response has been sent, i.e. each TCP connection serves
+    /// a single request.
+    /// This is the default, but allows the configuration to be more explicit.
+    #[must_use]
+    pub const fn close_connection_after_response(self) -> Self {
+        Self(self.0.close_connection_after_response())
+    }
+
+    #[inline]
+    pub(crate) fn config(self) -> &'static Config<Duration> {
+        mk_static!(Config<Duration>, self.0)
+    }
+}
+
+/// A server.
+pub struct Server<
+    const WEB_TASK_POOL_SIZE: usize,
+    PR: PathRouter<State, CurrentPathParameters> + Send + 'static,
+    State = (),
+    CurrentPathParameters = NoPathParameters,
+> {
+    device: Device<PR, State, CurrentPathParameters>,
+    config: ServerConfig,
+    mdns: Mdns,
+    port: u16,
+}
+
+impl<const WEB_TASK_POOL_SIZE: usize, PR: PathRouter<(), NoPathParameters> + Send + 'static>
+    Server<WEB_TASK_POOL_SIZE, PR>
+{
+    /// Creates a [`Server`].
+    pub const fn new(device: Device<PR>, config: ServerConfig, mdns: Mdns) -> Self {
+        Self {
+            device,
+            config,
+            mdns,
+            port: 80,
+        }
+    }
+
+    /// Sets server port.
+    #[must_use]
+    pub const fn port(mut self, port: u16) -> Self {
+        self.port = port;
+        self
+    }
+
+    /// Runs the server.
+    ///
+    /// # Errors
+    pub async fn run(self, stack: Stack<'static>, spawner: Spawner) -> Result<()> {
+        // Retrieve IP.
+        let ip = get_ip(stack).await;
+        info!("Server at IP Address: {ip}");
+
+        // Run mdns.
+        self.mdns.run(stack, self.port, spawner)?;
+
+        // Get server configuration.
+        let config = self.config.config();
+
+        // FIXME: Find a new strategy to obtain a static reference
+        // using static_cell. Probably, a new Rust version is necessary.
+        let internal_router: &'static Router<PR> =
+            unsafe { core::mem::transmute(&self.device.router) };
+
+        for id in 0..WEB_TASK_POOL_SIZE.max(1) {
+            let server_task: ServerTaskFn = Box::new(move || {
+                Box::pin(internal_server_run(
+                    id,
+                    stack,
+                    internal_router,
+                    config,
+                    self.port,
+                ))
+            });
+
+            match WEB_TASK_POOL_SIZE.max(1) {
+                1 => {
+                    spawner.spawn(web_task1(server_task))?;
+                }
+                2 => {
+                    spawner.spawn(web_task2(server_task))?;
+                }
+                3 => {
+                    spawner.spawn(web_task3(server_task))?;
+                }
+                4 => {
+                    spawner.spawn(web_task4(server_task))?;
+                }
+                5 => {
+                    spawner.spawn(web_task5(server_task))?;
+                }
+                6 => {
+                    spawner.spawn(web_task6(server_task))?;
+                }
+                7 => {
+                    spawner.spawn(web_task7(server_task))?;
+                }
+                _ => {
+                    spawner.spawn(web_task8(server_task))?;
+                }
+            }
+        }
+
+        Ok(())
+    }
 }

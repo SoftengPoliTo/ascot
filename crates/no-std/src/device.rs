@@ -1,17 +1,18 @@
-use ascot::device::DeviceKind;
+use picoserve::routing::{NoPathParameters, PathRouter, Router};
 
-use alloc::vec::Vec;
-
-pub struct DeviceAction {
-
+pub struct Device<
+    PR: PathRouter<State, CurrentPathParameters>,
+    State = (),
+    CurrentPathParameters = NoPathParameters,
+> {
+    //routes: Vec<Route>,
+    pub(crate) router: Router<PR, State, CurrentPathParameters>,
 }
 
-/// A general smart home device.
-pub struct Device {
-    // Kind.
-    kind: DeviceKind,
-    // Main device route.
-    main_route: &'static str,
-    // All device routes with their hazards and handlers.
-    routes_data: Vec<DeviceAction>,
+impl<PR: PathRouter<State, CurrentPathParameters>, State, CurrentPathParameters>
+    Device<PR, State, CurrentPathParameters>
+{
+    pub(crate) fn new(router: Router<PR, State, CurrentPathParameters>) -> Self {
+        Self { router }
+    }
 }

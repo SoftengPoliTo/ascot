@@ -1,34 +1,58 @@
-use ascot::{device::DeviceData, route::RouteConfigs};
-use log::*;
+use embassy_executor::Spawner;
 
-use embassy_time::{Duration, Timer};
+use esp_hal::peripherals::WIFI;
+use esp_hal::rng::Rng;
+use esp_hal::timer::timg::Timer;
 
-use esp_wifi::wifi::{Configuration, ClientConfiguration, WifiController, WifiEvent, WifiState};
+use esp_wifi::{
+    wifi::{
+        wifi_state, ClientConfiguration, Configuration, Interfaces, WifiController, WifiEvent,
+        WifiState,
+    },
+    {wifi, EspWifiController},
+};
 
-use crate::error::{Result, ErrorKind, Error};
+use log::{error, info};
 
-pub struct S {
-    d: DeviceData
-}
+use crate::error::{Error, ErrorKind, Result};
+use crate::mk_static;
 
-impl S {
-    pub fn new() -> Self {
-        Self {
-            d: DeviceData::new(ascot::device::DeviceKind::Light, ascot::device::DeviceEnvironment::Esp32, "main", RouteConfigs::new()),
-        }
-    }
-}
+const SECONDS_TO_WAIT_FOR_RECONNECTION: u64 = 5;
 
 pub struct Wifi {
+    _esp_wifi_controller: &'static EspWifiController<'static>,
     controller: WifiController<'static>,
+    interfaces: Interfaces<'static>,
+    spawner: Spawner,
 }
 
 impl Wifi {
-    pub fn new(controller: WifiController<'static>) -> Self {
-        Self { controller }
+    /// Configures `Wi-Fi`.
+    ///
+    /// # Errors
+    pub fn config(
+        timer: Timer<'static>,
+        rng: Rng,
+        peripherals_wifi: WIFI<'static>,
+        spawner: Spawner,
+    ) -> Result<Self> {
+        let esp_wifi_controller =
+            &*mk_static!(EspWifiController<'static>, esp_wifi::init(timer, rng)?);
+
+        let (controller, interfaces) = wifi::new(esp_wifi_controller, peripherals_wifi)?;
+
+        Ok(Self {
+            _esp_wifi_controller: esp_wifi_controller,
+            controller,
+            interfaces,
+            spawner,
+        })
     }
 
-    pub fn configure(&mut self, ssid: &str, password: &str) -> Result<()> {
+    /// Connects to `Wi-Fi`.
+    ///
+    /// # Errors
+    pub fn connect(mut self, ssid: &str, password: &str) -> Result<Interfaces<'static>> {
         if ssid.is_empty() {
             return Err(Error::new(ErrorKind::WiFi, "Missing Wi-Fi SSID"));
         }
@@ -45,34 +69,37 @@ impl Wifi {
 
         self.controller.set_configuration(&client_config)?;
 
-        Ok(())
-    }
+        self.spawner.spawn(connect(self.controller))?;
 
+        Ok(self.interfaces)
+    }
 }
 
-/// Task che mantiene la connessione Wi-Fi attiva, riconnettendosi automaticamente
 #[embassy_executor::task]
-pub async fn connect(mut wifi: Wifi) {
+async fn connect(mut wifi_controller: WifiController<'static>) {
     info!("Wi-Fi connection task started");
     loop {
-        match esp_wifi::wifi::wifi_state() {
-            WifiState::StaConnected => {
-                wifi.controller.wait_for_event(WifiEvent::StaDisconnected).await;
-                Timer::after(Duration::from_millis(5000)).await;
-            }
-            _ => {}
+        if wifi_state() == WifiState::StaConnected {
+            wifi_controller
+                .wait_for_event(WifiEvent::StaDisconnected)
+                .await;
+            embassy_time::Timer::after_secs(SECONDS_TO_WAIT_FOR_RECONNECTION).await;
         }
 
-        if !matches!(wifi.controller.is_started(), Ok(true)) {
+        if !matches!(wifi_controller.is_started(), Ok(true)) {
             info!("Starting Wi-Fi...");
-            wifi.controller.start_async().await.unwrap();
+            wifi_controller
+                .start_async()
+                .await
+                .map_err(Error::from)
+                .expect("Impossible to start Wi-Fi");
             info!("Wi-Fi started");
         }
 
         info!("Attempting to connect...");
-        if let Err(e) = wifi.controller.connect_async().await {
-            error!("Wi-Fi connect failed: {:?}", e);
-            Timer::after(Duration::from_millis(5000)).await;
+        if let Err(e) = wifi_controller.connect_async().await {
+            error!("Wi-Fi connect failed: {e:?}");
+            embassy_time::Timer::after_secs(SECONDS_TO_WAIT_FOR_RECONNECTION).await;
         } else {
             info!("Wi-Fi connected!");
         }
