@@ -8,23 +8,7 @@ use picoserve::routing::{
     get, MethodHandler, NoPathParameters, PathDescription, PathRouter, Router,
 };
 
-/*#[inline]
-fn add_route_to_router<
-    PR: PathRouter<State, CurrentPathParameters>,
-    State,
-    CurrentPathParameters,
-    T: MethodHandler<State, <&'static str as PathDescription<CurrentPathParameters>>::Output>,
->(
-    router: Router<PR, State, CurrentPathParameters>,
-    route: &'static str,
-    handler: T,
-) -> Router<
-    impl PathRouter<State, CurrentPathParameters> + use<PR, State, CurrentPathParameters, T>,
-    State,
-    CurrentPathParameters,
-> {
-    router.route(route, handler)
-}*/
+use crate::mk_static;
 
 /// A generic device.
 pub struct Device<PR: PathRouter<(), NoPathParameters>> {
@@ -70,6 +54,8 @@ impl<PR: PathRouter<(), NoPathParameters>> Device<PR> {
             self.num_mandatory_routes,
         );
 
-        router.route("/", get(|| async move { Json(device_data) }))
+        let response = &*mk_static!(DeviceData, device_data);
+
+        router.route("/", get(move || async move { Json(response) }))
     }
 }
