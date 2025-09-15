@@ -155,11 +155,9 @@ impl ServerConfig {
 /// A server.
 pub struct Server<
     const WEB_TASK_POOL_SIZE: usize,
-    PR: PathRouter<State, CurrentPathParameters> + Send + 'static,
-    State = (),
-    CurrentPathParameters = NoPathParameters,
+    PR: PathRouter<(), NoPathParameters> + Send + 'static,
 > {
-    device: Device<PR, State, CurrentPathParameters>,
+    device: Device<PR>,
     config: ServerConfig,
     mdns: Mdns,
     port: u16,
@@ -199,7 +197,7 @@ impl<const WEB_TASK_POOL_SIZE: usize, PR: PathRouter<(), NoPathParameters> + Sen
         // Get server configuration.
         let config = self.config.config();
 
-        // FIXME: Find a new strategy to obtain a static reference
+        // TODO: Find a new strategy to obtain a static reference
         // using static_cell. Probably, a new Rust version is necessary.
         let internal_router: &'static Router<PR> =
             unsafe { core::mem::transmute(&self.device.router) };

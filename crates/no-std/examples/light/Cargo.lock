@@ -1048,6 +1048,7 @@ checksum = "744a4c881f502e98c2241d2e5f50040ac73b30194d64452bb6260393b53f0dc9"
 name = "light"
 version = "0.1.0"
 dependencies = [
+ "ascot",
  "embassy-executor",
  "embassy-sync 0.7.2",
  "embassy-time 0.5.0",

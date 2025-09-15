@@ -1,18 +1,75 @@
-use picoserve::routing::{NoPathParameters, PathRouter, Router};
+use alloc::vec::Vec;
 
-pub struct Device<
+use ascot::device::{DeviceData, DeviceEnvironment, DeviceKind};
+use ascot::route::{Route, RouteConfigs};
+
+use picoserve::response::json::Json;
+use picoserve::routing::{
+    get, MethodHandler, NoPathParameters, PathDescription, PathRouter, Router,
+};
+
+/*#[inline]
+fn add_route_to_router<
     PR: PathRouter<State, CurrentPathParameters>,
-    State = (),
-    CurrentPathParameters = NoPathParameters,
+    State,
+    CurrentPathParameters,
+    T: MethodHandler<State, <&'static str as PathDescription<CurrentPathParameters>>::Output>,
+>(
+    router: Router<PR, State, CurrentPathParameters>,
+    route: &'static str,
+    handler: T,
+) -> Router<
+    impl PathRouter<State, CurrentPathParameters> + use<PR, State, CurrentPathParameters, T>,
+    State,
+    CurrentPathParameters,
 > {
-    //routes: Vec<Route>,
-    pub(crate) router: Router<PR, State, CurrentPathParameters>,
+    router.route(route, handler)
+}*/
+
+/// A generic device.
+pub struct Device<PR: PathRouter<(), NoPathParameters>> {
+    main_route: &'static str,
+    kind: DeviceKind,
+    routes: Vec<Route>,
+    num_mandatory_routes: u8,
+    pub(crate) router: Router<PR>,
 }
 
-impl<PR: PathRouter<State, CurrentPathParameters>, State, CurrentPathParameters>
-    Device<PR, State, CurrentPathParameters>
-{
-    pub(crate) fn new(router: Router<PR, State, CurrentPathParameters>) -> Self {
-        Self { router }
+impl<PR: PathRouter<(), NoPathParameters>> Device<PR> {
+    pub(crate) fn new(
+        main_route: &'static str,
+        kind: DeviceKind,
+        routes: Vec<Route>,
+        num_mandatory_routes: u8,
+        router: Router<PR>,
+    ) -> Self {
+        Self {
+            main_route,
+            kind,
+            routes,
+            num_mandatory_routes,
+            router,
+        }
+    }
+
+    pub(crate) fn finalize(self) -> Router<impl PathRouter> {
+        let router = self.router;
+
+        let mut route_configs = RouteConfigs::new();
+        for route in self.routes {
+            route_configs.add(route.serialize_data());
+        }
+
+        let device_data = DeviceData::new(
+            self.kind,
+            DeviceEnvironment::Esp32,
+            self.main_route,
+            route_configs,
+            None,
+            None,
+            self.num_mandatory_routes,
+        );
+
+        router.route("/", get(|| async move { Json(device_data) }))
     }
 }

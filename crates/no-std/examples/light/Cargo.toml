@@ -5,6 +5,9 @@ rust-version = "1.89"
 version      = "0.1.0"
 
 [dependencies]
+ascot.version = "0.1.0"
+ascot.path = "../../../ascot"
+
 no-std.version = "0.1.0"
 no-std.path = "../../"
 
