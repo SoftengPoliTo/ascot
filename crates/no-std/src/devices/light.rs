@@ -6,7 +6,9 @@ use ascot::route::Route;
 
 use esp_wifi::wifi::WifiDevice;
 
-use picoserve::routing::{MethodHandler, NoPathParameters, PathDescription, PathRouter, Router};
+use picoserve::routing::{
+    MethodHandler, NoPathParameters, NotFound, PathDescription, PathRouter, Router,
+};
 
 use crate::device::Device;
 
@@ -25,7 +27,7 @@ fn route_checks<
 >(
     route: Route,
     routes: &mut Vec<Route>,
-    router: Router<PR, State, CurrentPathParameters>,
+    internal_router: Router<PR, State, CurrentPathParameters>,
     handler: T,
 ) -> Router<
     impl PathRouter<State, CurrentPathParameters> + use<PR, State, CurrentPathParameters, T>,
@@ -40,45 +42,53 @@ fn route_checks<
         }
     }*/
 
-    let router = router.route(route.static_route(), handler);
+    let internal_router = internal_router.route(route.static_route(), handler);
 
     routes.push(route);
 
-    router
+    internal_router
 }
 
 /// A `light` device.
 ///
 /// This structure serves as the initial placeholder for constructing
 /// a [`CompleteLight`].
-pub struct Light([u8; 6]);
+pub struct Light<PR: PathRouter<(), NoPathParameters>>(CompleteLight<PR>);
 
-impl Light {
+impl Light<NotFound> {
     /// Creates a [`Light`].
+    #[inline]
+    #[must_use]
     pub fn new(wifi_interface: &WifiDevice<'_>) -> Self {
-        Self(wifi_interface.mac_address())
+        Self(CompleteLight {
+            id: wifi_interface.mac_address(),
+            main_route: LIGHT_MAIN_ROUTE,
+            routes: Vec::new(),
+            router: Router::new(),
+        })
     }
+}
 
+impl<PR: PathRouter<(), NoPathParameters>> Light<PR> {
     /// Creates a [`LightOnRoute`] that exclusively includes the route for
     /// turning a light on.
     ///
     /// This method **must** be called **first** to initialize and construct
     /// a [`CompleteLight`].
+    #[inline]
     pub fn turn_light_on(
-        self,
+        mut self,
         route: ascot::route::LightOnRoute,
         handler: impl MethodHandler<(), <&'static str as PathDescription<NoPathParameters>>::Output>,
     ) -> LightOnRoute<impl PathRouter<(), NoPathParameters>> {
         let route = route.into_route();
-        let router = Router::new();
-        let mut routes = Vec::new();
 
-        let router = route_checks(route, &mut routes, router, handler);
+        let router = route_checks(route, &mut self.0.routes, self.0.router, handler);
 
         LightOnRoute(CompleteLight {
-            id: self.0,
-            main_route: LIGHT_MAIN_ROUTE,
-            routes,
+            id: self.0.id,
+            main_route: self.0.main_route,
+            routes: self.0.routes,
             router,
         })
     }
@@ -94,6 +104,7 @@ impl<PR: PathRouter<(), NoPathParameters>> LightOnRoute<PR> {
     ///
     /// This method **must** be called **second** to initialize and construct
     /// a [`CompleteLight`].
+    #[inline]
     pub fn turn_light_off(
         mut self,
         route: ascot::route::LightOffRoute,
@@ -129,6 +140,7 @@ impl<PR: PathRouter<(), NoPathParameters>> CompleteLight<PR> {
     }
 
     /// Adds an additional route to a [`CompleteLight`].
+    #[inline]
     pub fn route(
         mut self,
         route: Route,
@@ -145,6 +157,7 @@ impl<PR: PathRouter<(), NoPathParameters>> CompleteLight<PR> {
     }
 
     /// Builds a [`Device`].
+    #[inline]
     pub fn build(self) -> Device<PR> {
         Device::new(
             self.main_route,

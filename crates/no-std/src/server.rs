@@ -197,10 +197,11 @@ impl<const WEB_TASK_POOL_SIZE: usize, PR: PathRouter<(), NoPathParameters> + Sen
         // Get server configuration.
         let config = self.config.config();
 
+        let raw_pointer_router =
+            core::ptr::from_ref::<Router<_>>(&self.device.finalize()).cast::<Router<PR>>();
         // TODO: Find a new strategy to obtain a static reference
         // using static_cell. Probably, a new Rust version is necessary.
-        let internal_router: &'static Router<PR> =
-            unsafe { core::mem::transmute(&self.device.finalize()) };
+        let internal_router: &'static Router<PR> = unsafe { &*raw_pointer_router };
 
         for id in 0..WEB_TASK_POOL_SIZE.max(1) {
             let server_task: ServerTaskFn = Box::new(move || {

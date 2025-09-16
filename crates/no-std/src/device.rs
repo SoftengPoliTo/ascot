@@ -14,7 +14,7 @@ pub struct Device<PR: PathRouter<(), NoPathParameters>> {
     kind: DeviceKind,
     routes: Vec<Route>,
     num_mandatory_routes: u8,
-    router: Router<PR>,
+    internal_router: Router<PR>,
 }
 
 impl<PR: PathRouter<(), NoPathParameters>> Device<PR> {
@@ -23,19 +23,19 @@ impl<PR: PathRouter<(), NoPathParameters>> Device<PR> {
         kind: DeviceKind,
         routes: Vec<Route>,
         num_mandatory_routes: u8,
-        router: Router<PR>,
+        internal_router: Router<PR>,
     ) -> Self {
         Self {
             main_route,
             kind,
             routes,
             num_mandatory_routes,
-            router,
+            internal_router,
         }
     }
 
     pub(crate) fn finalize(self) -> Router<impl PathRouter> {
-        let router = self.router;
+        let router = self.internal_router;
 
         let mut route_configs = RouteConfigs::new();
         for route in self.routes {
