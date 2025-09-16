@@ -4,6 +4,8 @@ use ascot::device::DeviceKind;
 use ascot::hazards::Hazard;
 use ascot::route::Route;
 
+use esp_wifi::wifi::WifiDevice;
+
 use picoserve::routing::{MethodHandler, NoPathParameters, PathDescription, PathRouter, Router};
 
 use crate::device::Device;
@@ -49,15 +51,21 @@ fn route_checks<
 ///
 /// This structure serves as the initial placeholder for constructing
 /// a [`CompleteLight`].
-pub struct Light;
+pub struct Light([u8; 6]);
 
 impl Light {
+    /// Creates a [`Light`].
+    pub fn new(wifi_interface: &WifiDevice<'_>) -> Self {
+        Self(wifi_interface.mac_address())
+    }
+
     /// Creates a [`LightOnRoute`] that exclusively includes the route for
     /// turning a light on.
     ///
     /// This method **must** be called **first** to initialize and construct
     /// a [`CompleteLight`].
     pub fn turn_light_on(
+        self,
         route: ascot::route::LightOnRoute,
         handler: impl MethodHandler<(), <&'static str as PathDescription<NoPathParameters>>::Output>,
     ) -> LightOnRoute<impl PathRouter<(), NoPathParameters>> {
@@ -68,6 +76,7 @@ impl Light {
         let router = route_checks(route, &mut routes, router, handler);
 
         LightOnRoute(CompleteLight {
+            id: self.0,
             main_route: LIGHT_MAIN_ROUTE,
             routes,
             router,
@@ -95,6 +104,7 @@ impl<PR: PathRouter<(), NoPathParameters>> LightOnRoute<PR> {
         let router = route_checks(route, &mut self.0.routes, self.0.router, handler);
 
         CompleteLight {
+            id: self.0.id,
             main_route: self.0.main_route,
             routes: self.0.routes,
             router,
@@ -104,6 +114,7 @@ impl<PR: PathRouter<(), NoPathParameters>> LightOnRoute<PR> {
 
 /// A fully configured `light` device with all mandatory routes initialized.
 pub struct CompleteLight<PR: PathRouter<(), NoPathParameters>> {
+    id: [u8; 6],
     main_route: &'static str,
     routes: Vec<Route>,
     router: Router<PR>,
@@ -126,6 +137,7 @@ impl<PR: PathRouter<(), NoPathParameters>> CompleteLight<PR> {
         let router = route_checks(route, &mut self.routes, self.router, handler);
 
         CompleteLight {
+            id: self.id,
             main_route: self.main_route,
             routes: self.routes,
             router,
