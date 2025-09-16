@@ -155,10 +155,9 @@ impl ServerConfig {
 /// A server.
 pub struct Server<
     const WEB_TASK_POOL_SIZE: usize,
-    PR: PathRouter<(), CurrentPathParameters> + Send + 'static,
-    CurrentPathParameters = NoPathParameters,
+    PR: PathRouter<(), NoPathParameters> + Send + 'static,
 > {
-    router: Router<PR, (), CurrentPathParameters>,
+    device: Device<PR>,
     config: ServerConfig,
     mdns: Mdns,
     port: u16,
@@ -170,10 +169,8 @@ impl<const WEB_TASK_POOL_SIZE: usize, PR: PathRouter<(), NoPathParameters> + Sen
     /// Creates a [`Server`].
     #[inline]
     pub fn new(device: Device<PR>, config: ServerConfig, mdns: Mdns) -> Self {
-        // Necessary here not to free the router.
-        let router = device.finalize();
         Self {
-            router,
+            device,
             config,
             mdns,
             port: 80,
@@ -202,7 +199,10 @@ impl<const WEB_TASK_POOL_SIZE: usize, PR: PathRouter<(), NoPathParameters> + Sen
         // Get server configuration.
         let config = self.config.config();
 
-        let router_pointer = (core::ptr::from_ref::<Router<_>>(&self.router)).cast::<Router<PR>>();
+        // Necessary here not to free the router.
+        let router = self.device.finalize();
+
+        let router_pointer = (core::ptr::from_ref::<Router<_>>(&router)).cast::<Router<PR>>();
         // TODO: Find a new strategy to obtain a static reference
         // using static_cell. Probably, a Rust version with more features
         // is necessary.

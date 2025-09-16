@@ -1,35 +1,29 @@
-use alloc::boxed::Box;
 use alloc::vec::Vec;
 
 use ascot::device::{DeviceData, DeviceEnvironment, DeviceKind};
 use ascot::route::{Route, RouteConfigs};
 
-use picoserve::response::{json::Json, IntoResponse};
+use picoserve::response::json::Json;
 use picoserve::routing::{get, NoPathParameters, PathRouter, Router};
 
 use crate::mk_static;
 
 /// A generic device.
-pub struct Device<
-    PR: PathRouter<(), CurrentPathParameters>,
-    CurrentPathParameters = NoPathParameters,
-> {
+pub struct Device<PR: PathRouter<(), NoPathParameters>> {
     main_route: &'static str,
     kind: DeviceKind,
     routes: Vec<Route>,
     num_mandatory_routes: u8,
-    internal_router: Router<PR, (), CurrentPathParameters>,
+    internal_router: Router<PR, (), NoPathParameters>,
 }
 
-impl<PR: PathRouter<(), CurrentPathParameters>, CurrentPathParameters>
-    Device<PR, CurrentPathParameters>
-{
+impl<PR: PathRouter<(), NoPathParameters>> Device<PR> {
     pub(crate) fn new(
         main_route: &'static str,
         kind: DeviceKind,
         routes: Vec<Route>,
         num_mandatory_routes: u8,
-        internal_router: Router<PR, (), CurrentPathParameters>,
+        internal_router: Router<PR, (), NoPathParameters>,
     ) -> Self {
         Self {
             main_route,
@@ -39,14 +33,9 @@ impl<PR: PathRouter<(), CurrentPathParameters>, CurrentPathParameters>
             internal_router,
         }
     }
-}
 
-async fn main_route(device_data: DeviceData) -> Json<DeviceData> {
-    Json(device_data)
-}
-
-impl<PR: PathRouter<(), NoPathParameters>> Device<PR> {
-    pub(crate) fn finalize(self) -> Router<PR> {
+    #[inline(always)]
+    pub(crate) fn finalize(self) -> Router<impl PathRouter> {
         let router = self.internal_router;
 
         let mut route_configs = RouteConfigs::new();
@@ -64,13 +53,9 @@ impl<PR: PathRouter<(), NoPathParameters>> Device<PR> {
             self.num_mandatory_routes,
         );
 
-        //let response = &*mk_static!(DeviceData, device_data);
+        let response = &*mk_static!(DeviceData, device_data);
 
-        let router = Router::new().route("/", get(|| async move { Json(device_data) }));
-
-        //let router = add_route("/", router, get(|| main_route(device_data)));
-
-        router
+        router.route("/", get(move || async move { Json(response) }))
     }
 }
 
