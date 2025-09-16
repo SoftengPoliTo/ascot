@@ -9,21 +9,26 @@ use picoserve::routing::{get, NoPathParameters, PathRouter, Router};
 use crate::mk_static;
 
 /// A generic device.
-pub struct Device<PR: PathRouter<(), NoPathParameters>> {
+pub struct Device<
+    PR: PathRouter<(), CurrentPathParameters>,
+    CurrentPathParameters = NoPathParameters,
+> {
     main_route: &'static str,
     kind: DeviceKind,
     routes: Vec<Route>,
     num_mandatory_routes: u8,
-    internal_router: Router<PR>,
+    pub(crate) internal_router: Router<PR, (), CurrentPathParameters>,
 }
 
-impl<PR: PathRouter<(), NoPathParameters>> Device<PR> {
+impl<PR: PathRouter<(), CurrentPathParameters>, CurrentPathParameters>
+    Device<PR, CurrentPathParameters>
+{
     pub(crate) fn new(
         main_route: &'static str,
         kind: DeviceKind,
         routes: Vec<Route>,
         num_mandatory_routes: u8,
-        internal_router: Router<PR>,
+        internal_router: Router<PR, (), CurrentPathParameters>,
     ) -> Self {
         Self {
             main_route,
@@ -34,10 +39,10 @@ impl<PR: PathRouter<(), NoPathParameters>> Device<PR> {
         }
     }
 
-    pub(crate) fn finalize(self) -> Router<impl PathRouter> {
-        let router = self.internal_router;
+    pub(crate) fn finalize(self) -> Router<PR, (), CurrentPathParameters> {
+        //let router = self.internal_router;
 
-        let mut route_configs = RouteConfigs::new();
+        /*let mut route_configs = RouteConfigs::new();
         for route in self.routes {
             route_configs.add(route.serialize_data());
         }
@@ -50,10 +55,12 @@ impl<PR: PathRouter<(), NoPathParameters>> Device<PR> {
             None,
             None,
             self.num_mandatory_routes,
-        );
+        );*/
 
-        let response = &*mk_static!(DeviceData, device_data);
+        //let response = &*mk_static!(DeviceData, device_data);
 
-        router.route("/", get(move || async move { Json(response) }))
+        //router.route("/", get(move || async move { Json(response) }))
+        //router.route("/", get(|| async move { "Hello world!" }))
+        self.internal_router
     }
 }

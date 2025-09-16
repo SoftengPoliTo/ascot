@@ -53,9 +53,12 @@ fn route_checks<
 ///
 /// This structure serves as the initial placeholder for constructing
 /// a [`CompleteLight`].
-pub struct Light<PR: PathRouter<(), NoPathParameters>>(CompleteLight<PR>);
+pub struct Light<
+    PR: PathRouter<(), CurrentPathParameters>,
+    CurrentPathParameters = NoPathParameters,
+>(CompleteLight<PR, CurrentPathParameters>);
 
-impl Light<NotFound> {
+impl Light<NotFound, NoPathParameters> {
     /// Creates a [`Light`].
     #[inline]
     #[must_use]
@@ -69,7 +72,9 @@ impl Light<NotFound> {
     }
 }
 
-impl<PR: PathRouter<(), NoPathParameters>> Light<PR> {
+impl<PR: PathRouter<(), CurrentPathParameters>, CurrentPathParameters>
+    Light<PR, CurrentPathParameters>
+{
     /// Creates a [`LightOnRoute`] that exclusively includes the route for
     /// turning a light on.
     ///
@@ -79,8 +84,11 @@ impl<PR: PathRouter<(), NoPathParameters>> Light<PR> {
     pub fn turn_light_on(
         mut self,
         route: ascot::route::LightOnRoute,
-        handler: impl MethodHandler<(), <&'static str as PathDescription<NoPathParameters>>::Output>,
-    ) -> LightOnRoute<impl PathRouter<(), NoPathParameters>> {
+        handler: impl MethodHandler<
+            (),
+            <&'static str as PathDescription<CurrentPathParameters>>::Output,
+        >,
+    ) -> LightOnRoute<impl PathRouter<(), CurrentPathParameters>, CurrentPathParameters> {
         let route = route.into_route();
 
         let router = route_checks(route, &mut self.0.routes, self.0.router, handler);
@@ -92,14 +100,34 @@ impl<PR: PathRouter<(), NoPathParameters>> Light<PR> {
             router,
         })
     }
+
+    /*pub fn turn_light_on<PD: PathDescription<CurrentPathParameters>>(
+        self,
+        path_description: PD,
+        handler: impl MethodHandler<(), PD::Output>,
+    ) -> LightOnRoute<impl PathRouter<(), CurrentPathParameters>, CurrentPathParameters> {
+        let new_router = Router::new().route(path_description, handler);
+
+        LightOnRoute(CompleteLight {
+            id: self.0.id,
+            main_route: self.0.main_route,
+            routes: self.0.routes,
+            router: new_router,
+        })
+    }*/
 }
 
 /// A `light` device configured with only the route to turn the light on.
 ///
 /// You need to invoke its sole method to construct a [`CompleteLight`].
-pub struct LightOnRoute<PR: PathRouter<(), NoPathParameters>>(CompleteLight<PR>);
+pub struct LightOnRoute<
+    PR: PathRouter<(), CurrentPathParameters>,
+    CurrentPathParameters = NoPathParameters,
+>(CompleteLight<PR, CurrentPathParameters>);
 
-impl<PR: PathRouter<(), NoPathParameters>> LightOnRoute<PR> {
+impl<PR: PathRouter<(), CurrentPathParameters>, CurrentPathParameters>
+    LightOnRoute<PR, CurrentPathParameters>
+{
     /// Creates a [`CompleteLight`].
     ///
     /// This method **must** be called **second** to initialize and construct
@@ -108,8 +136,11 @@ impl<PR: PathRouter<(), NoPathParameters>> LightOnRoute<PR> {
     pub fn turn_light_off(
         mut self,
         route: ascot::route::LightOffRoute,
-        handler: impl MethodHandler<(), <&'static str as PathDescription<NoPathParameters>>::Output>,
-    ) -> CompleteLight<impl PathRouter<(), NoPathParameters>> {
+        handler: impl MethodHandler<
+            (),
+            <&'static str as PathDescription<CurrentPathParameters>>::Output,
+        >,
+    ) -> CompleteLight<impl PathRouter<(), CurrentPathParameters>, CurrentPathParameters> {
         let route = route.into_route();
 
         let router = route_checks(route, &mut self.0.routes, self.0.router, handler);
@@ -121,17 +152,37 @@ impl<PR: PathRouter<(), NoPathParameters>> LightOnRoute<PR> {
             router,
         }
     }
+
+    /*pub fn turn_light_off<PD: PathDescription<CurrentPathParameters>>(
+        self,
+        path_description: PD,
+        handler: impl MethodHandler<(), PD::Output>,
+    ) -> CompleteLight<impl PathRouter<(), CurrentPathParameters>, CurrentPathParameters> {
+        let new_router = self.0.router.route(path_description, handler);
+
+        CompleteLight {
+            id: self.0.id,
+            main_route: self.0.main_route,
+            routes: self.0.routes,
+            router: new_router,
+        }
+    }*/
 }
 
 /// A fully configured `light` device with all mandatory routes initialized.
-pub struct CompleteLight<PR: PathRouter<(), NoPathParameters>> {
+pub struct CompleteLight<
+    PR: PathRouter<(), CurrentPathParameters>,
+    CurrentPathParameters = NoPathParameters,
+> {
     id: [u8; 6],
     main_route: &'static str,
     routes: Vec<Route>,
-    router: Router<PR>,
+    router: Router<PR, (), CurrentPathParameters>,
 }
 
-impl<PR: PathRouter<(), NoPathParameters>> CompleteLight<PR> {
+impl<PR: PathRouter<(), CurrentPathParameters>, CurrentPathParameters>
+    CompleteLight<PR, CurrentPathParameters>
+{
     /// Sets a new main route.
     #[must_use]
     pub const fn main_route(mut self, main_route: &'static str) -> Self {
@@ -144,8 +195,11 @@ impl<PR: PathRouter<(), NoPathParameters>> CompleteLight<PR> {
     pub fn route(
         mut self,
         route: Route,
-        handler: impl MethodHandler<(), <&'static str as PathDescription<NoPathParameters>>::Output>,
-    ) -> CompleteLight<impl PathRouter<(), NoPathParameters>> {
+        handler: impl MethodHandler<
+            (),
+            <&'static str as PathDescription<CurrentPathParameters>>::Output,
+        >,
+    ) -> CompleteLight<impl PathRouter<(), CurrentPathParameters>, CurrentPathParameters> {
         let router = route_checks(route, &mut self.routes, self.router, handler);
 
         CompleteLight {
@@ -158,7 +212,7 @@ impl<PR: PathRouter<(), NoPathParameters>> CompleteLight<PR> {
 
     /// Builds a [`Device`].
     #[inline]
-    pub fn build(self) -> Device<PR> {
+    pub fn build(self) -> Device<PR, CurrentPathParameters> {
         Device::new(
             self.main_route,
             DeviceKind::Light,

@@ -1059,6 +1059,7 @@ dependencies = [
  "esp-println",
  "log",
  "no-std",
+ "picoserve",
  "toml-cfg",
 ]
 

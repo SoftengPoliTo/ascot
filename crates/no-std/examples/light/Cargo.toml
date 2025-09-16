@@ -33,6 +33,9 @@ esp-println = { version = "0.15.0", features = ["esp32c3", "log-04"] }
 # log dependency
 log = "0.4.27"
 
+# Picoserve dependency
+picoserve = { version = "0.16.0", features = ["embassy", "log"] }
+
 # Toml dependency
 toml-cfg.version = "0.2.0"
 toml-cfg.default-features = false

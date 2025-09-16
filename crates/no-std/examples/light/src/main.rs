@@ -173,31 +173,32 @@ async fn main(spawner: Spawner) {
         .spawn(change_led(led))
         .expect("Impossible to spawn the task to change the led");
 
-    let device = Light::turn_light_on(
-        LightOnRoute::put("On").description("Turn light on."),
-        get(|| async move {
-            // Notify led to turn led on.
-            NOTIFY_LED.signal(LedInput::On);
+    let device = Light::new(&interfaces.ap)
+        .turn_light_on(
+            LightOnRoute::put("On").description("Turn light on."),
+            get(|| async move {
+                // Notify led to turn led on.
+                NOTIFY_LED.signal(LedInput::On);
 
-            log::info!("Led turned on through GET route!");
+                log::info!("Led turned on through GET route!");
 
-            // Wait for some time before starting the loop again.
-            Timer::after_millis(MILLISECONDS_TO_WAIT).await;
-        }),
-    )
-    .turn_light_off(
-        LightOffRoute::put("Off").description("Turn light off."),
-        get(|| async move {
-            // Notify led to turn led off.
-            NOTIFY_LED.signal(LedInput::Off);
+                // Wait for some time before starting the loop again.
+                Timer::after_millis(MILLISECONDS_TO_WAIT).await;
+            }),
+        )
+        .turn_light_off(
+            LightOffRoute::put("Off").description("Turn light off."),
+            get(|| async move {
+                // Notify led to turn led off.
+                NOTIFY_LED.signal(LedInput::Off);
 
-            log::info!("Led turned off through GET route!");
+                log::info!("Led turned off through GET route!");
 
-            // Wait for some time before starting the loop again.
-            Timer::after_millis(MILLISECONDS_TO_WAIT).await;
-        }),
-    )
-    .build();
+                // Wait for some time before starting the loop again.
+                Timer::after_millis(MILLISECONDS_TO_WAIT).await;
+            }),
+        )
+        .build();
 
     let config = ServerConfig::new()
         .start_read_request(Duration::from_secs(5))

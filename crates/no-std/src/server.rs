@@ -155,9 +155,10 @@ impl ServerConfig {
 /// A server.
 pub struct Server<
     const WEB_TASK_POOL_SIZE: usize,
-    PR: PathRouter<(), NoPathParameters> + Send + 'static,
+    PR: PathRouter<(), CurrentPathParameters> + Send + 'static,
+    CurrentPathParameters = NoPathParameters,
 > {
-    device: Device<PR>,
+    router: Router<PR, (), CurrentPathParameters>,
     config: ServerConfig,
     mdns: Mdns,
     port: u16,
@@ -167,9 +168,11 @@ impl<const WEB_TASK_POOL_SIZE: usize, PR: PathRouter<(), NoPathParameters> + Sen
     Server<WEB_TASK_POOL_SIZE, PR>
 {
     /// Creates a [`Server`].
-    pub const fn new(device: Device<PR>, config: ServerConfig, mdns: Mdns) -> Self {
+    #[inline]
+    pub fn new(device: Device<PR>, config: ServerConfig, mdns: Mdns) -> Self {
+        let router = device.finalize();
         Self {
-            device,
+            router,
             config,
             mdns,
             port: 80,
@@ -192,26 +195,23 @@ impl<const WEB_TASK_POOL_SIZE: usize, PR: PathRouter<(), NoPathParameters> + Sen
         info!("Server at IP Address: {ip}");
 
         // Run mdns.
-        self.mdns.run(stack, self.port, spawner)?;
+        // FIXME: Do we need to use the same server port?
+        self.mdns.run(stack, 443, spawner)?;
 
         // Get server configuration.
         let config = self.config.config();
 
-        // Get device information and sets route.
-        let raw_pointer_router =
-            core::ptr::from_ref::<Router<_>>(&self.device.finalize()).cast::<Router<PR>>();
+        let router_pointer = (core::ptr::from_ref::<Router<_>>(&self.router)).cast::<Router<PR>>();
         // TODO: Find a new strategy to obtain a static reference
-        // using static_cell. Probably, a new Rust version is necessary.
-        let internal_router: &'static Router<PR> = unsafe { &*raw_pointer_router };
+        // using static_cell. Probably, a Rust version with more features
+        // is necessary.
+        // SAFETY: The pointer is not null, so this conversion is safe.
+        let router_ref: &'static Router<PR> = unsafe { &*router_pointer };
 
         for id in 0..WEB_TASK_POOL_SIZE.max(1) {
             let server_task: ServerTaskFn = Box::new(move || {
                 Box::pin(internal_server_run(
-                    id,
-                    stack,
-                    internal_router,
-                    config,
-                    self.port,
+                    id, stack, router_ref, config, self.port,
                 ))
             });
 
