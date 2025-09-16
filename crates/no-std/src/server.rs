@@ -170,6 +170,7 @@ impl<const WEB_TASK_POOL_SIZE: usize, PR: PathRouter<(), NoPathParameters> + Sen
     /// Creates a [`Server`].
     #[inline]
     pub fn new(device: Device<PR>, config: ServerConfig, mdns: Mdns) -> Self {
+        // Necessary here not to free the router.
         let router = device.finalize();
         Self {
             router,

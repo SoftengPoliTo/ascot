@@ -100,21 +100,6 @@ impl<PR: PathRouter<(), CurrentPathParameters>, CurrentPathParameters>
             router,
         })
     }
-
-    /*pub fn turn_light_on<PD: PathDescription<CurrentPathParameters>>(
-        self,
-        path_description: PD,
-        handler: impl MethodHandler<(), PD::Output>,
-    ) -> LightOnRoute<impl PathRouter<(), CurrentPathParameters>, CurrentPathParameters> {
-        let new_router = Router::new().route(path_description, handler);
-
-        LightOnRoute(CompleteLight {
-            id: self.0.id,
-            main_route: self.0.main_route,
-            routes: self.0.routes,
-            router: new_router,
-        })
-    }*/
 }
 
 /// A `light` device configured with only the route to turn the light on.
@@ -152,21 +137,6 @@ impl<PR: PathRouter<(), CurrentPathParameters>, CurrentPathParameters>
             router,
         }
     }
-
-    /*pub fn turn_light_off<PD: PathDescription<CurrentPathParameters>>(
-        self,
-        path_description: PD,
-        handler: impl MethodHandler<(), PD::Output>,
-    ) -> CompleteLight<impl PathRouter<(), CurrentPathParameters>, CurrentPathParameters> {
-        let new_router = self.0.router.route(path_description, handler);
-
-        CompleteLight {
-            id: self.0.id,
-            main_route: self.0.main_route,
-            routes: self.0.routes,
-            router: new_router,
-        }
-    }*/
 }
 
 /// A fully configured `light` device with all mandatory routes initialized.

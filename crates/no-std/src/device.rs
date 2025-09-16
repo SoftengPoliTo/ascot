@@ -1,9 +1,10 @@
+use alloc::boxed::Box;
 use alloc::vec::Vec;
 
 use ascot::device::{DeviceData, DeviceEnvironment, DeviceKind};
 use ascot::route::{Route, RouteConfigs};
 
-use picoserve::response::json::Json;
+use picoserve::response::{json::Json, IntoResponse};
 use picoserve::routing::{get, NoPathParameters, PathRouter, Router};
 
 use crate::mk_static;
@@ -17,7 +18,7 @@ pub struct Device<
     kind: DeviceKind,
     routes: Vec<Route>,
     num_mandatory_routes: u8,
-    pub(crate) internal_router: Router<PR, (), CurrentPathParameters>,
+    internal_router: Router<PR, (), CurrentPathParameters>,
 }
 
 impl<PR: PathRouter<(), CurrentPathParameters>, CurrentPathParameters>
@@ -38,8 +39,14 @@ impl<PR: PathRouter<(), CurrentPathParameters>, CurrentPathParameters>
             internal_router,
         }
     }
+}
 
-    pub(crate) fn finalize(self) -> Router<PR, (), CurrentPathParameters> {
+async fn main_route(device_data: DeviceData) -> Json<DeviceData> {
+    Json(device_data)
+}
+
+impl<PR: PathRouter<(), NoPathParameters>> Device<PR> {
+    pub(crate) fn finalize(self) -> Router<PR> {
         let router = self.internal_router;
 
         let mut route_configs = RouteConfigs::new();
@@ -59,8 +66,24 @@ impl<PR: PathRouter<(), CurrentPathParameters>, CurrentPathParameters>
 
         //let response = &*mk_static!(DeviceData, device_data);
 
-        //router.route("/", get(move || async move { Json(response) }))
-        //router.route("/", get(|| async move { "Hello world!" }))
+        let router = Router::new().route("/", get(|| async move { Json(device_data) }));
+
+        //let router = add_route("/", router, get(|| main_route(device_data)));
+
         router
     }
+}
+
+use picoserve::routing::{MethodHandler, PathDescription};
+
+#[inline]
+fn add_route<
+    PR: PathRouter<(), NoPathParameters>,
+    T: MethodHandler<(), <&'static str as PathDescription<NoPathParameters>>::Output>,
+>(
+    route: &'static str,
+    internal_router: Router<PR, (), NoPathParameters>,
+    handler: T,
+) -> Router<impl PathRouter<(), NoPathParameters>, (), NoPathParameters> {
+    internal_router.route(route, handler)
 }
