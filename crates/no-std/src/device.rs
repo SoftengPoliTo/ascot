@@ -40,9 +40,9 @@ impl<PR: PathRouter<(), CurrentPathParameters>, CurrentPathParameters>
     }
 
     pub(crate) fn finalize(self) -> Router<PR, (), CurrentPathParameters> {
-        //let router = self.internal_router;
+        let router = self.internal_router;
 
-        /*let mut route_configs = RouteConfigs::new();
+        let mut route_configs = RouteConfigs::new();
         for route in self.routes {
             route_configs.add(route.serialize_data());
         }
@@ -55,12 +55,12 @@ impl<PR: PathRouter<(), CurrentPathParameters>, CurrentPathParameters>
             None,
             None,
             self.num_mandatory_routes,
-        );*/
+        );
 
         //let response = &*mk_static!(DeviceData, device_data);
 
         //router.route("/", get(move || async move { Json(response) }))
         //router.route("/", get(|| async move { "Hello world!" }))
-        self.internal_router
+        router
     }
 }
