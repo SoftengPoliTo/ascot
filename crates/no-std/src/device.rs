@@ -4,9 +4,7 @@ use ascot::device::{DeviceData, DeviceEnvironment, DeviceKind};
 use ascot::route::{Route, RouteConfigs};
 
 use picoserve::response::json::Json;
-use picoserve::routing::{
-    get, MethodHandler, NoPathParameters, PathDescription, PathRouter, Router,
-};
+use picoserve::routing::{get, NoPathParameters, PathRouter, Router};
 
 use crate::mk_static;
 
@@ -16,7 +14,7 @@ pub struct Device<PR: PathRouter<(), NoPathParameters>> {
     kind: DeviceKind,
     routes: Vec<Route>,
     num_mandatory_routes: u8,
-    pub(crate) router: Router<PR>,
+    router: Router<PR>,
 }
 
 impl<PR: PathRouter<(), NoPathParameters>> Device<PR> {

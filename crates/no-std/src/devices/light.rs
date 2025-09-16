@@ -47,14 +47,16 @@ fn route_checks<
 
 /// A `light` device.
 ///
-/// This structure is just a placeholder to guide the construction
-/// of a [`CompleteLight`].
+/// This structure serves as the initial placeholder for constructing
+/// a [`CompleteLight`].
 pub struct Light;
 
 impl Light {
-    /// Creates a [`LightOnRoute`] containing the route to turn a light on only.
+    /// Creates a [`LightOnRoute`] that exclusively includes the route for
+    /// turning a light on.
     ///
-    /// This method represents the first step to build a [`CompleteLight`].
+    /// This method **must** be called **first** to initialize and construct
+    /// a [`CompleteLight`].
     pub fn turn_light_on(
         route: ascot::route::LightOnRoute,
         handler: impl MethodHandler<(), <&'static str as PathDescription<NoPathParameters>>::Output>,
@@ -73,13 +75,16 @@ impl Light {
     }
 }
 
-/// A `light` containing only the route to turn a light on.
+/// A `light` device configured with only the route to turn the light on.
 ///
-/// You must call its only method to build a [`CompleteLight`].
+/// You need to invoke its sole method to construct a [`CompleteLight`].
 pub struct LightOnRoute<PR: PathRouter<(), NoPathParameters>>(CompleteLight<PR>);
 
 impl<PR: PathRouter<(), NoPathParameters>> LightOnRoute<PR> {
     /// Creates a [`CompleteLight`].
+    ///
+    /// This method **must** be called **second** to initialize and construct
+    /// a [`CompleteLight`].
     pub fn turn_light_off(
         mut self,
         route: ascot::route::LightOffRoute,
@@ -97,7 +102,7 @@ impl<PR: PathRouter<(), NoPathParameters>> LightOnRoute<PR> {
     }
 }
 
-/// A complete `light` device with all the mandatory routes set.
+/// A fully configured `light` device with all mandatory routes initialized.
 pub struct CompleteLight<PR: PathRouter<(), NoPathParameters>> {
     main_route: &'static str,
     routes: Vec<Route>,
