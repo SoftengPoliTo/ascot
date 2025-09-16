@@ -197,6 +197,7 @@ impl<const WEB_TASK_POOL_SIZE: usize, PR: PathRouter<(), NoPathParameters> + Sen
         // Get server configuration.
         let config = self.config.config();
 
+        // Get device information and sets route.
         let raw_pointer_router =
             core::ptr::from_ref::<Router<_>>(&self.device.finalize()).cast::<Router<PR>>();
         // TODO: Find a new strategy to obtain a static reference
