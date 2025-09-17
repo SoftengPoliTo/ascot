@@ -2,12 +2,16 @@ use core::{future::Future, pin::Pin};
 
 use alloc::boxed::Box;
 
+use ascot::device::{DeviceData, DeviceEnvironment};
+use ascot::route::RouteConfigs;
+
 use embassy_executor::Spawner;
 use embassy_net::Stack;
 use embassy_time::Duration;
 use picoserve::{
     listen_and_serve,
-    routing::{NoPathParameters, PathRouter, Router},
+    response::json::Json,
+    routing::{get, NoPathParameters, PathRouter, Router},
     Config, KeepAlive, Timeouts,
 };
 
@@ -199,8 +203,37 @@ impl<const WEB_TASK_POOL_SIZE: usize, PR: PathRouter<(), NoPathParameters> + Sen
         // Get server configuration.
         let config = self.config.config();
 
-        // Necessary here not to free the router.
-        let router = self.device.finalize();
+        let Device {
+            routes,
+            kind,
+            main_route,
+            num_mandatory_routes,
+            internal_router,
+        } = self.device;
+
+        let mut route_configs = RouteConfigs::new();
+        for route in routes {
+            route_configs.add(route.serialize_data());
+        }
+
+        // NOTE: We need to allocate on heap otherwise the stack is saturated
+        // during the creation of this object.
+        let device_data = Box::new(DeviceData::new(
+            kind,
+            DeviceEnvironment::Esp32,
+            main_route,
+            route_configs,
+            None,
+            None,
+            num_mandatory_routes,
+        ));
+
+        // NOTE: Necessary to free the heap and pass the reference to the
+        // closure.
+        let response: &'static DeviceData = Box::leak(device_data);
+
+        let router =
+            internal_router.route("/", get(|| async move { Json(response).into_response() }));
 
         let router_pointer = (core::ptr::from_ref::<Router<_>>(&router)).cast::<Router<PR>>();
         // TODO: Find a new strategy to obtain a static reference
