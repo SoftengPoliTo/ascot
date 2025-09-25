@@ -15,8 +15,8 @@ APIs and interfaces to:
 It can even run on an embedded system since it is a `no_std` library.
 
 The [ascot-os](./crates/ascot-os) and [ascot-esp32c3](./crates/ascot-esp32c3)
-are two Rust libraries which make use of the `ascot` crate library as dependency
-to define the APIs for their respective architectures.
+are two Rust libraries which make use of the `ascot` library as dependency to
+define the APIs for their respective architectures.
 
 The `ascot-os` library is thought for firmware which run on operating systems.
 In the [ascot-os/examples](./crates/ascot-os/examples) directory, a simple
@@ -27,7 +27,7 @@ board.
 In the [ascot-esp32c3/examples](./crates/ascot-esp32c3/examples) directory,
 various device firmware have been implemented.
 
-## Build process
+## Building
 
 To build the entire workspace with the `debug` profile, run the following
 command from the root of the repository:
