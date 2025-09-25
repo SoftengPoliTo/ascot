@@ -1,37 +1,68 @@
-use core::net::Ipv4Addr;
+use embassy_executor::Spawner;
 
-use esp_idf_svc::wifi::{AuthMethod, ClientConfiguration, Configuration};
+use esp_hal::peripherals::WIFI;
+use esp_hal::rng::Rng;
+use esp_hal::timer::timg::Timer;
 
-use esp_idf_svc::hal::modem::Modem;
-use esp_idf_svc::hal::peripheral::Peripheral;
-use esp_idf_svc::hal::task::block_on;
-use esp_idf_svc::timer::EspTaskTimerService;
-use esp_idf_svc::wifi::{AsyncWifi, EspWifi};
-use esp_idf_svc::{eventloop::EspSystemEventLoop, nvs::EspDefaultNvsPartition};
+use esp_wifi::{
+    wifi::{
+        wifi_state, ClientConfiguration, Configuration, Interfaces, WifiController, WifiEvent,
+        WifiState,
+    },
+    {wifi, EspWifiController},
+};
 
-use log::info;
+use log::{error, info};
 
 use crate::error::{Error, ErrorKind, Result};
+use crate::mk_static;
 
-/// The Wi-Fi connection mechanism.
+const SECONDS_TO_WAIT_FOR_RECONNECTION: u64 = 5;
+
+/// The `Wi-Fi` controller.
 pub struct Wifi {
-    /// Ipv4 assigned by the DHCP to the board.
-    pub ip: Ipv4Addr,
-    _wifi: AsyncWifi<EspWifi<'static>>,
+    _esp_wifi_controller: &'static EspWifiController<'static>,
+    controller: WifiController<'static>,
+    interfaces: Interfaces<'static>,
+    spawner: Spawner,
 }
 
 impl Wifi {
-    /// Connects to Wi-Fi given an input SSID and password.
+    /// Configures the [`Wifi`] controller with the given parameters.
     ///
     /// # Errors
     ///
-    /// It returns an error whether the `ssid` and `password` do not exist or
-    /// when some failures occur during Wi-Fi connection.
-    pub fn connect_wifi(
-        ssid: &'static str,
-        password: &'static str,
-        modem: impl Peripheral<P = Modem> + 'static,
+    /// Unable to initialize the `Wi-Fi` controller and retrieve the
+    /// corresponding network interfaces.
+    pub fn configure(
+        timer: Timer<'static>,
+        rng: Rng,
+        peripherals_wifi: WIFI<'static>,
+        spawner: Spawner,
     ) -> Result<Self> {
+        let esp_wifi_controller =
+            &*mk_static!(EspWifiController<'static>, esp_wifi::init(timer, rng)?);
+
+        let (controller, interfaces) = wifi::new(esp_wifi_controller, peripherals_wifi)?;
+
+        Ok(Self {
+            _esp_wifi_controller: esp_wifi_controller,
+            controller,
+            interfaces,
+            spawner,
+        })
+    }
+
+    /// Connects a device to a `Wi-Fi` access point.
+    ///
+    /// # Errors
+    ///
+    /// - Missing `Wi-Fi` SSID
+    /// - Missing `Wi-Fi` password
+    /// - Failure to set up the `Wi-Fi` configuration
+    /// - Failure to spawn the task to connect the device to the access point
+    ///   via `Wi-Fi`.
+    pub fn connect(mut self, ssid: &str, password: &str) -> Result<Interfaces<'static>> {
         if ssid.is_empty() {
             return Err(Error::new(ErrorKind::WiFi, "Missing Wi-Fi SSID"));
         }
@@ -40,56 +71,47 @@ impl Wifi {
             return Err(Error::new(ErrorKind::WiFi, "Missing Wi-Fi password"));
         }
 
-        // Retrieve system loop (singleton)
-        let sys_loop = EspSystemEventLoop::take()?;
-        // Retrieve timer service (singleton)
-        let timer_service = EspTaskTimerService::new()?;
-        // Retrieve nvs partitions (singleton)
-        let nvs = EspDefaultNvsPartition::take()?;
-
-        let mut wifi = AsyncWifi::wrap(
-            EspWifi::new(modem, sys_loop.clone(), Some(nvs))?,
-            sys_loop,
-            timer_service,
-        )?;
-
-        block_on(Self::connect(&mut wifi, ssid, password))?;
-
-        let ip_info = wifi.wifi().sta_netif().get_ip_info()?;
-
-        info!("Wifi DHCP info: {ip_info:?}");
-
-        Ok(Self {
-            ip: ip_info.ip,
-            _wifi: wifi,
-        })
-    }
-
-    async fn connect(
-        wifi: &mut AsyncWifi<EspWifi<'static>>,
-        ssid: &str,
-        password: &str,
-    ) -> Result<()> {
-        let wifi_configuration: Configuration = Configuration::Client(ClientConfiguration {
-            ssid: ssid.try_into().unwrap(),
-            bssid: None,
-            auth_method: AuthMethod::WPA2Personal,
-            password: password.try_into().unwrap(),
-            channel: None,
+        let client_config = Configuration::Client(ClientConfiguration {
+            ssid: ssid.into(),
+            password: password.into(),
             ..Default::default()
         });
 
-        wifi.set_configuration(&wifi_configuration)?;
+        self.controller.set_configuration(&client_config)?;
 
-        wifi.start().await?;
-        info!("Wifi started");
+        self.spawner.spawn(connect(self.controller))?;
 
-        wifi.connect().await?;
-        info!("Wifi connected");
+        Ok(self.interfaces)
+    }
+}
 
-        wifi.wait_netif_up().await?;
-        info!("Wifi netif up");
+#[embassy_executor::task]
+async fn connect(mut wifi_controller: WifiController<'static>) {
+    info!("Wi-Fi connection task started");
+    loop {
+        if wifi_state() == WifiState::StaConnected {
+            wifi_controller
+                .wait_for_event(WifiEvent::StaDisconnected)
+                .await;
+            embassy_time::Timer::after_secs(SECONDS_TO_WAIT_FOR_RECONNECTION).await;
+        }
 
-        Ok(())
+        if !matches!(wifi_controller.is_started(), Ok(true)) {
+            info!("Starting Wi-Fi...");
+            wifi_controller
+                .start_async()
+                .await
+                .map_err(Error::from)
+                .expect("Impossible to start Wi-Fi");
+            info!("Wi-Fi started");
+        }
+
+        info!("Attempting to connect...");
+        if let Err(e) = wifi_controller.connect_async().await {
+            error!("Wi-Fi connect failed: {e:?}");
+            embassy_time::Timer::after_secs(SECONDS_TO_WAIT_FOR_RECONNECTION).await;
+        } else {
+            info!("Wi-Fi connected!");
+        }
     }
 }

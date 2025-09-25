@@ -2,59 +2,58 @@
 
 [![LICENSE][license badge]][license]
 
-A Rust library crate to create `Ascot` firmware for `ESP32-C3` boards.
+A Rust library crate designed to develop `Ascot` firmware on `ESP32-C3`
+boards.
 
-It provides some APIs to connect the board to a router through Wi-Fi,
-configure and run an HTTP server with some of the implemented discovery service.
-For now, only a `mDNS-SD` service has been developed.
+It offers APIs to:
 
-Some APIs have been implemented with the goal of defining well-known devices.
-As now, only a `light` has been implemented in the [src/devices](./src/devices)
-directory. These APIs are specifically thought to guide a developer in defining
-a correct and a safe device, such as the addition of mandatory and optional 
-actions which are possible on that device.
+- Connect a device to a `Wi-Fi` access point
+- Build the network stack
+- Configure the `mDNS-SD` discovery service
+- Initialize and run an `HTTP` server
 
-The implemented devices can be found inside the [examples](./examples)
-directory.
+The device APIs have been conceived to assist developers in defining their
+own devices, minimizing as much as possible the ambiguities that may arise
+during firmware development.
 
-## Building Prerequisites
+Some of the most common errors include:
 
-Follow the [Prerequisites](https://github.com/esp-rs/esp-idf-template#prerequisites)
-section contained in the `esp-idf-template` crate.
+- Absence of the fundamental methods that define a device
+- Missing or incorrect hazard information for an operation
 
-## Building
+To ensure device customization, there are also APIs to add
+device-specific operations. For example, an RGB light may require methods
+to control its colors individually, a feature that is not necessary for a
+basic light.
 
-To build this crate with a `debug` profile run:
+Currently, only the [light](./src/devices/light.rs) device and its associated
+APIs have been implemented within the [src/devices](./src/devices) directory.
+However, this does not prevent other devices from being implemented without
+needing to change the overall crate structure.
+
+Multiple implementations of real devices integrated with different sensors can
+be found in the [examples](./examples) directory.
+
+## Build Process
+
+To compile this crate with the `debug` profile, run:
 
 ```console
 cargo build
 ```
 
-To build this crate with a `release` profile which enables all time and
-memory optimizations run:
+To compile this crate with the `release` profile, which applies all
+optimizations for faster performance and reduced memory usage, run:
 
 ```console
 cargo build --release
 ```
 
-## Usage Prerequisites
+## Build process for firmware devices
 
-Below some prerequisites for those projects interested in using this crate:
-
-- The [sdkconfig.defaults](./sdkconfig.defaults) configuration file will
-probably be different from firmware to firmware, so copy this file into your
-project, and then change its values according to your needs.
-For example, the stack size might be increased or some of these file options
-might be added or removed.
-
-## Building complete firmware devices
-
-The directory [examples](./examples) contains firmware implemented with
-the `ascot-esp32c3` crate. Each firmware is independent from another and it can
-be moved in a separate repository.
-
-Before any kind of build, run `cargo clean` to remove old builds configurations,
-and then run `cargo update` to update all dependencies.
+The [examples](./examples) directory includes firmware examples built with the
+`ascot-esp32c3` crate. Each example is independent from another and can be moved
+to a separate repository.
 
 To build a firmware run:
 
@@ -63,18 +62,18 @@ cd examples/[firmware directory name]
 cargo build
 ```
 
-It is necessary to enter the `examples/[firmware directory name]` to use the
-`sdkconfig.defaults` file specific for that firmware.
-
 To flash and run the firmware on an `ESP32-C3` board:
 
 ```console
 cd examples/[firmware directory name]
-cargo run [--release]
+cargo run --release
 ```
 
-The optional `--release` parameter enables all optimizations and makes the
-final firmware smaller.
+> [!IMPORTANT]
+> Always use the release profile [--release] when building esp-hal.
+  The dev profile can potentially be one or more orders of magnitude
+  slower than release profile, and may cause issues with timing-senstive
+  peripherals and/or devices.
 
 <!-- Links -->
 [license]: https://github.com/SoftengPoliTo/ascot/blob/master/LICENSE

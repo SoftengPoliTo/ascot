@@ -1,9 +1,9 @@
-# Light Firmware
+# Stateful Light Firmware
 
 [![LICENSE][license badge]][license]
 
 An `Ascot` light firmware to turn the built-in LED on an `ESP32-C3`
-board on and off.
+board on and off with a state to count the number of `toggle` requests.
 
 It implements an `HTTP` server that manages the state of the board's
 built-in LED via `REST` requests:
@@ -14,6 +14,9 @@ built-in LED via `REST` requests:
 
 For each request, the server responds with the _final_ status of the operation
 invoked by that request.
+
+The firmware's state monitors the number of times the `light/toggle` route is 
+invoked and outputs this count to the console.
 
 The board can be discovered by another node on the same network via
 an `mDNS-SD` service using the default domain `ascot`.

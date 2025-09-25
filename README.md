@@ -24,8 +24,8 @@ device firmware has been implemented as examples: a [light](./crates/ascot-os/ex
 
 The `ascot-esp32c3` library is thought for firmware which run on a `ESP32-C3`
 board.
-In the [ascot-esp32c3/devices](./crates/ascot-esp32c3/devices) directory, a simple
-device firmware has been implemented as example: a [light](./crates/ascot-esp32c3/devices/light).
+In the [ascot-esp32c3/examples](./crates/ascot-esp32c3/examples) directory,
+various device firmware have been implemented.
 
 ## Building
 
@@ -47,9 +47,11 @@ To build only a specific crate, navigate to its corresponding subdirectory
 inside [crates](./crates) and run the same build commands described above.
 
 > [!NOTE]
-> The `ascot-esp32c3` crate is not part of the workspace. It must
-be built separately because it targets a specific architecture
-(`riscv32imc-esp-espidf`) and requires a different build process.
+> The `ascot-esp32c3` crate is not part of the workspace. It needs to be built
+separately because it targets a specific architecture
+(`riscv32imc-unknown-none-elf`), which necessitates a specialized build process.
+The [per-package-target](https://doc.rust-lang.org/cargo/reference/unstable.html#per-package-target)
+feature in Cargo is unstable, therefore only available on nightly toolchain.
 
 <!-- Links -->
 [actions]: https://github.com/SoftengPoliTo/ascot/actions

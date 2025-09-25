@@ -1,8 +1,0 @@
-# Stack size used by the board. If there are some stack blowups, increase this
-# value until there are no more issues. This value is based on a Rust build with
-# a release profile.
-CONFIG_ESP_MAIN_TASK_STACK_SIZE=40000
-# Stack size associated to system event
-CONFIG_ESP_SYSTEM_EVENT_TASK_STACK_SIZE=8192
-# Default stack size associated to each thread
-CONFIG_PTHREAD_TASK_STACK_SIZE_DEFAULT=8192

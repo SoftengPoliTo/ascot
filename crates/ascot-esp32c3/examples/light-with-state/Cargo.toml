@@ -1,10 +1,10 @@
 [package]
-name         = "light"
+name         = "light-with-state"
 version      = "0.1.0"
 rust-version = "1.89"
 edition      = "2024"
 authors = ["Michele Valsesia <luni-4@hotmail.it>"]
-description = "A simple stateless light for an ESP32-C3 board."
+description = "A simple stateful light for an ESP32-C3 board."
 license = "MIT"
 
 [dependencies]
@@ -43,6 +43,10 @@ esp-wifi.features = ["builtin-scheduler", "esp-alloc", "esp32c3", "log-04", "smo
 
 # Logging utilities
 log.version = "0.4.27"
+
+# Static cell
+static_cell.version = "2.1.1"
+static_cell.features = ["nightly"]
 
 # Toml dependency
 toml-cfg.version = "0.2.0"
