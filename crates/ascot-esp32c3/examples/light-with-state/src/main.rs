@@ -8,6 +8,8 @@
 
 extern crate alloc;
 
+use core::sync::atomic::{AtomicU32, Ordering};
+
 use ascot::route::{LightOffRoute, LightOnRoute, Route};
 
 use esp_hal::clock::CpuClock;
@@ -28,6 +30,7 @@ use ascot_esp32c3::{
     net::{get_ip, NetworkStack},
     response::{EmptyResponse, IntoResponse, Response, TextResponse},
     server::Server,
+    state::{State, ValueFromRef},
     wifi::Wifi,
 };
 
@@ -45,6 +48,15 @@ const TIMEOUT: u32 = 15 * 1000;
 
 // Signal which notifies the led change of state.
 static NOTIFY_LED: Signal<CriticalSectionRawMutex, LedInput> = Signal::new();
+
+macro_rules! mk_static {
+    ($t:ty,$val:expr) => {{
+        static STATIC_CELL: static_cell::StaticCell<$t> = static_cell::StaticCell::new();
+        #[deny(unused_attributes)]
+        let x = STATIC_CELL.uninit().write(($val));
+        x
+    }};
+}
 
 // This creates a default app-descriptor required by the esp-idf bootloader.
 // For more information see: <https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/system/app_image_format.html#application-description>
@@ -153,6 +165,23 @@ async fn turn_light_off() -> Response {
     TextResponse::new("Light off").into_response()
 }
 
+struct RequestCounter(&'static AtomicU32);
+
+impl ValueFromRef for RequestCounter {
+    fn value_from_ref(&self) -> Self {
+        Self(self.0)
+    }
+}
+
+async fn stateful_toggle(
+    State(RequestCounter(request_counter)): State<RequestCounter>,
+) -> Response {
+    let old_value = request_counter.load(Ordering::Relaxed);
+    request_counter.store(old_value + 1, Ordering::Relaxed);
+    log::info!("Request number: {request_counter:?}");
+    EmptyResponse::ok().into_response()
+}
+
 #[esp_hal_embassy::main]
 async fn main(spawner: Spawner) {
     esp_println::logger::init_logger_from_env();
@@ -190,7 +219,7 @@ async fn main(spawner: Spawner) {
     // - 1 task to check if a button is pressed
     // - 1 task to check if a led state is changed
     let stack = NetworkStack::build::<6>(rng, interfaces.sta, spawner)
-        .expect("Failed to create network stack.");
+        .expect("Failed to create the network stack.");
 
     // Input button
     let button = Input::new(
@@ -208,18 +237,21 @@ async fn main(spawner: Spawner) {
         .spawn(change_led(led))
         .expect("Impossible to spawn the task to change the led");
 
-    let device = Light::new(&interfaces.ap)
-        .turn_light_on_stateless(
+    let request_counter = RequestCounter(mk_static!(AtomicU32, AtomicU32::new(0)));
+    let device = Light::with_state(&interfaces.ap, request_counter)
+        .turn_light_on_stateful(
             LightOnRoute::put("On").description("Turn light on."),
-            turn_light_on,
+            |State(RequestCounter(_request_counter)): State<RequestCounter>| async move {
+                turn_light_on().await
+            },
         )
         .turn_light_off_stateless(
             LightOffRoute::put("Off").description("Turn light off."),
-            turn_light_off,
+            || async move { turn_light_off().await },
         )
-        .stateless_route(
+        .stateful_route(
             Route::get("Toggle", "/toggle").description("Toggle."),
-            || async move { EmptyResponse::ok().into_response() },
+            stateful_toggle,
         )
         .build();
 

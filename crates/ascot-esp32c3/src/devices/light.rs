@@ -1,93 +1,245 @@
-use ascot::device::DeviceKind;
+use alloc::borrow::Cow;
+use alloc::boxed::Box;
+use alloc::vec::Vec;
+
+use ascot::device::{DeviceData, DeviceEnvironment, DeviceKind};
 use ascot::hazards::Hazard;
+use ascot::route::{Route, RouteConfigs};
 
-use crate::device::{Device, DeviceAction, DeviceBuilder};
-use crate::error::{Error, ErrorKind, Result};
+use esp_wifi::wifi::WifiDevice;
 
-// The default main route for a light.
-const LIGHT_MAIN_ROUTE: &str = "/light";
+use log::error;
+
+use crate::device::Device;
+use crate::response::{IntoResponse, JsonResponse, Response};
+use crate::server::{FuncIndex, FuncType, InputFn, InputStateFn};
+use crate::state::{State, ValueFromRef};
+
+// Default main route.
+const MAIN_ROUTE: &str = "/light";
 
 // Allowed hazards.
 const ALLOWED_HAZARDS: &[Hazard] = &[Hazard::FireHazard, Hazard::ElectricEnergyConsumption];
 
-// Number of mandatory routes.
-const MANDATORY_ROUTES: u8 = 2;
+// TODO: Check hazards (import this functionality in ascot)
+// Return an error if action hazards are not a subset of allowed hazards.
+/*for hazard in route.hazards() {
+    if !ALLOWED_HAZARDS.contains(hazard) {
+        return Err(Error::new(ErrorKind::Device, "Hazard not allowed"));
+    }
+}*/
 
-/// A smart home light.
+/// A `light` device.
 ///
-/// The default server main route for a light is `light`.
+/// The first placeholder to construct a [`CompleteLight`].
+pub struct Light<S = ()>(CompleteLight<S>)
+where
+    S: ValueFromRef + Send + Sync + 'static;
+
+impl Light<()> {
+    /// Creates a [`Light`] without a [`State`].
+    #[must_use]
+    #[inline]
+    pub fn new(wifi_interface: &WifiDevice<'_>) -> Self {
+        Self(CompleteLight::with_state(wifi_interface, ()))
+    }
+}
+
+impl<S> Light<S>
+where
+    S: ValueFromRef + Send + Sync + 'static,
+{
+    /// Creates a [`Light`] with a [`State`].
+    #[inline]
+    pub fn with_state(wifi_interface: &WifiDevice<'_>, state: S) -> Self {
+        Self(CompleteLight::with_state(wifi_interface, state))
+    }
+
+    /// Turns a light on using a stateless handler.
+    #[must_use]
+    #[inline]
+    pub fn turn_light_on_stateless<F, Fut>(
+        self,
+        route: ascot::route::LightOnRoute,
+        func: F,
+    ) -> LightOnRoute<S>
+    where
+        F: Fn() -> Fut + Send + Sync + 'static,
+        Fut: Future<Output = Response> + Send + Sync + 'static,
+    {
+        LightOnRoute(self.0.stateless_route(route.into_route(), func))
+    }
+
+    /// Turns a light on using a stateful handler.
+    #[must_use]
+    #[inline]
+    pub fn turn_light_on_stateful<F, Fut>(
+        self,
+        route: ascot::route::LightOnRoute,
+        func: F,
+    ) -> LightOnRoute<S>
+    where
+        F: Fn(State<S>) -> Fut + Send + Sync + 'static,
+        Fut: Future<Output = Response> + Send + Sync + 'static,
+    {
+        LightOnRoute(self.0.stateful_route(route.into_route(), func))
+    }
+}
+
+/// A `light` placeholder containing only the route to turn the light on.
 ///
-/// If a smart home needs more lights, each light **MUST** provide a
-/// **different** main route in order to be registered.
-pub struct Light {
-    // Main device route.
+/// All of its methods constructs a [`CompleteLight`].
+pub struct LightOnRoute<S = ()>(CompleteLight<S>)
+where
+    S: ValueFromRef + Send + Sync + 'static;
+
+impl<S> LightOnRoute<S>
+where
+    S: ValueFromRef + Send + Sync + 'static,
+{
+    /// Turns a light off using a stateless handler.
+    #[must_use]
+    #[inline]
+    pub fn turn_light_off_stateless<F, Fut>(
+        self,
+        route: ascot::route::LightOffRoute,
+        func: F,
+    ) -> CompleteLight<S>
+    where
+        F: Fn() -> Fut + Send + Sync + 'static,
+        Fut: Future<Output = Response> + Send + Sync + 'static,
+    {
+        self.0.stateless_route(route.into_route(), func)
+    }
+
+    /// Turns a light off using a stateful handler.
+    #[must_use]
+    #[inline]
+    pub fn turn_light_off_stateful<F, Fut>(
+        self,
+        route: ascot::route::LightOffRoute,
+        func: F,
+    ) -> CompleteLight<S>
+    where
+        F: Fn(State<S>) -> Fut + Send + Sync + 'static,
+        Fut: Future<Output = Response> + Send + Sync + 'static,
+    {
+        self.0.stateful_route(route.into_route(), func)
+    }
+}
+
+/// A `light` device with methods to turn a light on and off.
+pub struct CompleteLight<S = ()>
+where
+    S: ValueFromRef + Send + Sync + 'static,
+{
     main_route: &'static str,
-    // Device.
-    device: Device,
-    // Allowed light hazards.
-    allowed_hazards: &'static [Hazard],
-    // Number of mandatory routes.
-    mandatory_routes: u8,
+    state: State<S>,
+    routes_functions: (Vec<InputFn>, Vec<InputStateFn<S>>),
+    device: DeviceData,
+    index_array: Vec<FuncIndex>,
 }
 
-impl DeviceBuilder for Light {
-    fn into_device(self) -> Device {
-        self.device
-            .main_route(self.main_route)
-            .mandatory_routes(self.mandatory_routes)
-    }
-}
-
-impl Light {
-    /// Creates a [`Light`].
+impl<S> CompleteLight<S>
+where
+    S: ValueFromRef + Send + Sync + 'static,
+{
+    /// Changes the main route.
     #[must_use]
-    pub fn new(turn_light_on: DeviceAction, turn_light_off: DeviceAction) -> Self {
-        // Create a new device.
-        let device = Device::new(DeviceKind::Light)
-            .add_action(turn_light_on)
-            .add_action(turn_light_off);
-
-        Self {
-            main_route: LIGHT_MAIN_ROUTE,
-            device,
-            allowed_hazards: ALLOWED_HAZARDS,
-            mandatory_routes: MANDATORY_ROUTES,
-        }
-    }
-
-    /// Sets a new main route.
-    #[must_use]
-    pub const fn main_route(mut self, main_route: &'static str) -> Self {
+    #[inline]
+    pub fn main_route(mut self, main_route: &'static str) -> Self {
         self.main_route = main_route;
+        self.device.main_route = Cow::Borrowed(main_route);
         self
     }
 
-    /// Adds an additional action for a [`Light`].
-    ///
-    /// # Errors
-    ///
-    /// It returns an error whether one or more hazards are not allowed for
-    /// the [`Light`] device.
-    pub fn add_action(mut self, light_action: DeviceAction) -> Result<Self> {
-        // Return an error if action hazards are not a subset of allowed hazards.
-        for hazard in &light_action.route_config.data.hazards {
-            if !self.allowed_hazards.contains(hazard) {
-                return Err(Error::new(
-                    ErrorKind::Light,
-                    format!("{hazard} hazard is not allowed for light"),
-                ));
-            }
+    /// Adds a [`Route`] with a stateless handler.
+    #[must_use]
+    pub fn stateless_route<F, Fut>(mut self, route: Route, func: F) -> Self
+    where
+        F: Fn() -> Fut + Send + Sync + 'static,
+        Fut: Future<Output = Response> + Send + Sync + 'static,
+    {
+        let route_config = route.serialize_data();
+
+        if self.device.route_configs.contains(&route_config) {
+            error!(
+                "The route with prefix `{}` already exists!",
+                route_config.data.path
+            );
         }
 
-        self.device = self.device.add_action(light_action);
-
-        Ok(self)
+        let func: InputFn = Box::new(move || Box::pin(func()));
+        self.routes_functions.0.push(func);
+        self.device.route_configs.add(route_config);
+        self.index_array.push(FuncIndex::new(
+            FuncType::First,
+            self.routes_functions.0.len() - 1,
+        ));
+        self
     }
 
-    /// Builds a new [`Device`].
+    /// Adds a [`Route`] with a stateful handler.
+    #[must_use]
+    pub fn stateful_route<F, Fut>(mut self, route: Route, func: F) -> Self
+    where
+        F: Fn(State<S>) -> Fut + Send + Sync + 'static,
+        Fut: Future<Output = Response> + Send + Sync + 'static,
+    {
+        let route_config = route.serialize_data();
+
+        if self.device.route_configs.contains(&route_config) {
+            error!(
+                "The route with prefix `{}` already exists!",
+                route_config.data.path
+            );
+        }
+
+        let func: InputStateFn<S> = Box::new(move |state| Box::pin(func(state)));
+        self.routes_functions.1.push(func);
+        self.device.route_configs.add(route_config);
+        self.index_array.push(FuncIndex::new(
+            FuncType::Second,
+            self.routes_functions.1.len() - 1,
+        ));
+        self
+    }
+
+    /// Builds a [`Device`].
     #[must_use]
     #[inline]
-    pub fn build(self) -> Device {
-        self.into_device()
+    pub fn build(self) -> Device<S> {
+        Device::new(
+            self.main_route,
+            self.state,
+            self.routes_functions,
+            self.index_array,
+            JsonResponse::new(&self.device).into_response(),
+            self.device.route_configs,
+        )
+    }
+
+    #[inline]
+    fn with_state(wifi_interface: &WifiDevice<'_>, state: S) -> Self {
+        let id = wifi_interface.mac_address();
+
+        let device = DeviceData::new(
+            DeviceKind::Light,
+            DeviceEnvironment::Esp32,
+            MAIN_ROUTE,
+            RouteConfigs::new(),
+            Some(id),
+            None,
+            2,
+        )
+        .description("A light device.");
+
+        Self {
+            main_route: MAIN_ROUTE,
+            state: State(state),
+            routes_functions: (Vec::new(), Vec::new()),
+            device,
+            index_array: Vec::new(),
+        }
     }
 }
