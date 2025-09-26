@@ -21,7 +21,7 @@ use log::info;
 use crate::device::Device;
 use crate::error::Error;
 use crate::mdns::Mdns;
-use crate::response::{EmptyResponse, IntoResponse, Response};
+use crate::response::{IntoResponse, Response, RouteErrorResponse};
 use crate::state::{State, ValueFromRef};
 
 // Default HTTP address.
@@ -174,8 +174,8 @@ where
     fn new(device: Device<S>) -> Self {
         Self {
             device,
-            not_found_response: EmptyResponse::not_found().into_response(),
-            not_allowed_response: EmptyResponse::not_allowed().into_response(),
+            not_found_response: RouteErrorResponse::not_found().into_response(),
+            not_allowed_response: RouteErrorResponse::not_allowed().into_response(),
         }
     }
 
