@@ -8,6 +8,8 @@
 
 extern crate alloc;
 
+use core::sync::atomic::{AtomicBool, Ordering};
+
 use ascot::route::{LightOffRoute, LightOnRoute, Route};
 
 use esp_hal::clock::CpuClock;
@@ -43,8 +45,10 @@ const MAXIMUM_HEADERS_COUNT: usize = 32;
 // Timeout.
 const TIMEOUT: u32 = 15 * 1000;
 
-// Signal which notifies the led change of state.
+// Signal that indicates a change in the LED's state.
 static NOTIFY_LED: Signal<CriticalSectionRawMutex, LedInput> = Signal::new();
+// Atomic signal to enable and disable the toggle task.
+static TOGGLE_CONTROLLER: AtomicBool = AtomicBool::new(false);
 
 // This creates a default app-descriptor required by the esp-idf bootloader.
 // For more information see: <https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/system/app_image_format.html#application-description>
@@ -67,17 +71,24 @@ struct DeviceConfig {
 enum LedInput {
     On,
     Off,
+    Toggle,
     Button,
 }
 
 #[embassy_executor::task]
 async fn press_button(mut button: Input<'static>) {
     loop {
-        // Wait for Button Press
+        // Wait until the button is pressed.
         button.wait_for_rising_edge().await;
         info!("Button Pressed!");
 
-        // Notify led to change its state.
+        // Disable the toggle task.
+        TOGGLE_CONTROLLER.store(false, Ordering::Relaxed);
+
+        // Wait for a specified amount of time before notifying the LED.
+        Timer::after_millis(MILLISECONDS_TO_WAIT).await;
+
+        // Notify led to change its current state.
         NOTIFY_LED.signal(LedInput::Button);
 
         // Wait for some time before starting the loop again.
@@ -85,22 +96,38 @@ async fn press_button(mut button: Input<'static>) {
     }
 }
 
-// Set led to on.
+// Turn the led on.
+#[inline]
 fn led_on(led: &mut Output<'static>) {
     led.set_low();
     info!("Led is on!");
 }
 
-// Set led to off.
+// Turn the led off.
+#[inline]
 fn led_off(led: &mut Output<'static>) {
     led.set_high();
     info!("Led is off!");
 }
 
+// Toggle the led.
+#[inline]
+fn toggle_led(led: &mut Output<'static>) {
+    // Toggle the LED on or off based on its current state.
+    //
+    // Since the LED uses a pull-up configuration, a high signal indicates that
+    // the LED is turned off.
+    if led.is_set_high() {
+        led_on(led);
+    } else {
+        led_off(led);
+    }
+}
+
 #[embassy_executor::task]
 async fn change_led(mut led: Output<'static>) {
     loop {
-        // Wait for until a signal is received.
+        // Wait until a signal is received before proceeding.
         let led_input = NOTIFY_LED.wait().await;
 
         match led_input {
@@ -111,46 +138,50 @@ async fn change_led(mut led: Output<'static>) {
                 led_off(&mut led);
             }
             LedInput::Button => {
-                // Turn the led on or off depending on its current state.
-                //
-                // Check whether the led is on since it is a pull-up led.
-                if led.is_set_high() {
-                    led_on(&mut led);
-                } else {
-                    led_off(&mut led);
+                toggle_led(&mut led);
+            }
+            LedInput::Toggle => {
+                while TOGGLE_CONTROLLER.load(Ordering::Relaxed) {
+                    toggle_led(&mut led);
+                    // Pause for 1 second before toggling the LED again.
+                    Timer::after_secs(1).await;
                 }
             }
         }
 
-        // Wait for some time before starting the loop again.
+        // Wait for a specified duration before restarting the loop.
         Timer::after_millis(MILLISECONDS_TO_WAIT).await;
     }
 }
 
-async fn turn_light_on() -> Response {
-    // Notify led to turn led on.
-    NOTIFY_LED.signal(LedInput::On);
+#[inline]
+async fn notify_led(led_input: LedInput, message: &str, text_message: &'static str) -> Response {
+    // Disable the toggle task.
+    TOGGLE_CONTROLLER.store(false, Ordering::Relaxed);
 
-    log::info!("Led turned on through GET route!");
-
-    // Wait for some time before starting the loop again.
+    // Wait for a specified amount of time before notifying the LED.
     Timer::after_millis(MILLISECONDS_TO_WAIT).await;
 
-    // Returns an empty response.
-    TextResponse::new("Light on").into_response()
+    // Notify led to change its current state.
+    NOTIFY_LED.signal(led_input);
+
+    log::info!("{message}");
+
+    // Returns a text response.
+    TextResponse::new(text_message).into_response()
+}
+
+async fn turn_light_on() -> Response {
+    notify_led(LedInput::On, "Led turned on through PUT route!", "Light on").await
 }
 
 async fn turn_light_off() -> Response {
-    // Notify led to turn led off.
-    NOTIFY_LED.signal(LedInput::Off);
-
-    log::info!("Led turned off through GET route!");
-
-    // Wait for some time before starting the loop again.
-    Timer::after_millis(MILLISECONDS_TO_WAIT).await;
-
-    // Returns an empty response.
-    TextResponse::new("Light off").into_response()
+    notify_led(
+        LedInput::Off,
+        "Led turned off through PUT route!",
+        "Light off",
+    )
+    .await
 }
 
 #[esp_hal_embassy::main]
@@ -219,7 +250,17 @@ async fn main(spawner: Spawner) {
         )
         .stateless_route(
             Route::get("Toggle", "/toggle").description("Toggle."),
-            || async move { EmptyResponse::ok().into_response() },
+            || async move {
+                // Enable the toggle task.
+                TOGGLE_CONTROLLER.store(true, Ordering::Relaxed);
+
+                // Notify led.
+                NOTIFY_LED.signal(LedInput::Toggle);
+
+                info!("Led toggled through GET route!");
+
+                EmptyResponse::ok().into_response()
+            },
         )
         .build();
 
