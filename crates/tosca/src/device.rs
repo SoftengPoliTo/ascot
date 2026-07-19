@@ -40,6 +40,8 @@ pub trait DeviceKindTrait {
 pub enum DeviceKind {
     /// Unknown.
     Unknown,
+    /// Camera.
+    Camera,
     /// Light.
     Light,
 }
@@ -48,6 +50,7 @@ impl DeviceKindTrait for DeviceKind {
     fn name(&self) -> &'static str {
         match self {
             Self::Unknown => "Unknown",
+            Self::Camera => "Camera",
             Self::Light => "Light",
         }
     }
@@ -291,7 +294,10 @@ mod tests {
     };
     use crate::{deserialize, serialize};
 
-    use super::{DeviceDescription, DeviceEnvironment, DeviceKind, DeviceKindId, DeviceMetrics};
+    use super::{
+        DeviceDescription, DeviceEnvironment, DeviceKind, DeviceKindId, DeviceKindTrait,
+        DeviceMetrics,
+    };
 
     fn energy() -> Energy {
         let energy_efficiencies =
@@ -326,12 +332,16 @@ mod tests {
 
     #[test]
     fn test_device_kind() {
-        for device_kind in &[DeviceKind::Unknown, DeviceKind::Light] {
+        for device_kind in &[DeviceKind::Unknown, DeviceKind::Camera, DeviceKind::Light] {
             assert_eq!(
                 deserialize::<DeviceKind>(serialize(device_kind)),
                 *device_kind
             );
         }
+
+        assert_eq!(serialize(DeviceKind::Camera), "Camera");
+        assert_eq!(DeviceKind::Camera.name(), "Camera");
+        assert!(DeviceKindId::new("Camera").matches(&DeviceKind::Camera));
     }
 
     #[test]
