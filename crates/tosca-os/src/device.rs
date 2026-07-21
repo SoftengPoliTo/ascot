@@ -165,7 +165,6 @@ mod tests {
     #[test]
     fn sets_device_kind() {
         let device = Device::new().kind(&DeviceKind::Camera);
-
         assert!(device.description.data.kind.matches(&DeviceKind::Camera));
     }
 
