@@ -57,6 +57,13 @@ where
         Self::init(&DeviceKind::Unknown, state)
     }
 
+    /// Sets the device kind.
+    #[must_use]
+    pub fn kind<K: DeviceKindTrait>(mut self, kind: &K) -> Self {
+        self.description.data.kind = DeviceKindId::from(kind);
+        self
+    }
+
     /// Sets the main route.
     #[must_use]
     pub const fn main_route(mut self, main_route: &'static str) -> Self {
@@ -139,7 +146,7 @@ mod tests {
 
     use core::ops::{Deref, DerefMut};
 
-    use tosca::device::DeviceMetrics;
+    use tosca::device::{DeviceKind, DeviceMetrics};
     use tosca::energy::Energy;
     use tosca::route::Route;
 
@@ -154,6 +161,13 @@ mod tests {
     use crate::responses::serial::{SerialResponse, serial_stateful, serial_stateless};
 
     use super::Device;
+
+    #[test]
+    fn sets_device_kind() {
+        let device = Device::new().kind(&DeviceKind::Camera);
+
+        assert!(device.description.data.kind.matches(&DeviceKind::Camera));
+    }
 
     #[derive(Clone)]
     struct DeviceState<S>
