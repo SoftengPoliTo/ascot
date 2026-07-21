@@ -6,6 +6,7 @@ mod stream;
 use std::net::Ipv4Addr;
 use std::sync::Arc;
 
+use tosca::device::DeviceKind;
 use tosca::hazards::Hazard;
 use tosca::parameters::Parameters;
 use tosca::route::Route;
@@ -381,6 +382,7 @@ async fn main() -> Result<(), Error> {
 
     // A camera device which is going to be run on the server.
     let device = Device::with_state(InternalState::new(camera))
+        .kind(&DeviceKind::Camera)
         .main_route("/camera")
         .route(stream_stateful(camera_stream_route, show_camera_stream))
         .route(serial_stateless(view_cameras_route, show_available_cameras))
