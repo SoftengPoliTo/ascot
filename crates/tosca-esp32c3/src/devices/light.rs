@@ -7,7 +7,7 @@ use tosca::hazards::Hazard;
 use tosca::response::ResponseKind;
 use tosca::route::{Route, RouteConfigs};
 
-use esp_radio::wifi::WifiDevice;
+use esp_radio::wifi::Interface;
 
 use log::error;
 
@@ -38,7 +38,7 @@ impl Light<()> {
     /// Creates a [`Light`] without a [`State`].
     #[must_use]
     #[inline]
-    pub fn new(wifi_interface: &WifiDevice<'_>) -> Self {
+    pub fn new(wifi_interface: Interface<'_>) -> Self {
         Self(CompleteLight::with_state(wifi_interface, ()))
     }
 }
@@ -49,7 +49,7 @@ where
 {
     /// Creates a [`Light`] with a [`State`].
     #[inline]
-    pub fn with_state(wifi_interface: &WifiDevice<'_>, state: S) -> Self {
+    pub fn with_state(wifi_interface: Interface<'_>, state: S) -> Self {
         Self(CompleteLight::with_state(wifi_interface, state))
     }
 
@@ -382,7 +382,7 @@ where
     }
 
     #[inline]
-    fn with_state(wifi_interface: &WifiDevice<'_>, state: S) -> Self {
+    fn with_state(wifi_interface: Interface<'_>, state: S) -> Self {
         let wifi_mac = wifi_interface.mac_address();
 
         let device_data = DeviceDescription::new(
