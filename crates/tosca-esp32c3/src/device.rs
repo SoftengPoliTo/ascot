@@ -218,6 +218,8 @@ where
         }
 
         self.description.data.wifi_mac = Some(self.wifi_mac);
+        self.description.main_route = Cow::Borrowed(self.main_route);
+
         Ok(DeviceVerified(self))
     }
 
