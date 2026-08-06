@@ -125,15 +125,13 @@ impl BaseResponse {
     }
 
     pub(crate) fn finalize(self, allowed_hazards: &[Hazard]) -> (RouteConfig, Router) {
-        let route = if allowed_hazards.is_empty() {
-            self.route.serialize_data()
-        } else {
-            self.route
-                .remove_prohibited_hazards(allowed_hazards)
-                .serialize_data()
-        };
+        let route = self
+            .route
+            .remove_prohibited_hazards(allowed_hazards)
+            .serialize_data()
+            .change_response_kind(self.response_kind);
 
-        (route.change_response_kind(self.response_kind), self.router)
+        (route, self.router)
     }
 }
 
