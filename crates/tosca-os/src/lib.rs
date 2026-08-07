@@ -43,9 +43,7 @@ pub mod responses;
 /// The firmware server.
 pub mod server;
 /// The discovery service used to make the firmware detectable on the network.
-pub mod service {
-    pub use super::services::{ServiceConfig, TransportProtocol};
-}
+pub mod service;
 
 /// Utilities for parsing request parameters and constructing responses.
 pub mod extract {
@@ -54,4 +52,3 @@ pub mod extract {
 }
 
 mod mac;
-mod services;
