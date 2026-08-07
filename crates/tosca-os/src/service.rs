@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::net::{IpAddr, Ipv4Addr};
 
-use crate::error::Result;
+use crate::error::{Error, ErrorKind, Result};
 
 // Service domain.
 //
@@ -168,8 +168,18 @@ impl Service {
     // Shutdowns a service.
     #[inline]
     pub(crate) fn shutdown(self) -> Result<()> {
-        drop(self.0.shutdown()?);
-        Ok(())
+        let rx = self.0.shutdown()?;
+
+        match rx
+            .recv()
+            .map_err(|e| Error::new(ErrorKind::Service, e.to_string()))?
+        {
+            mdns_sd::DaemonStatus::Shutdown => Ok(()),
+            status => Err(Error::new(
+                ErrorKind::Service,
+                format!("Unexpected daemon status after shutdown: {status:?}"),
+            )),
+        }
     }
 }
 
