@@ -7,7 +7,7 @@ use tracing::info;
 
 use crate::device::DeviceVerified;
 use crate::error::Result;
-use crate::services::{Service, ServiceConfig};
+use crate::service::{Service, ServiceConfig};
 
 // Default HTTP address.
 //
