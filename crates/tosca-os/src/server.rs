@@ -168,15 +168,17 @@ where
         info!("Server route: [GET, \"{}\"]", well_known_uri);
 
         // Run a discovery service if present.
-        if let Some(service_config) = self.data.service_config {
-            // Add server properties.
-            let service_config = service_config
-                .property(("scheme", self.data.scheme))
-                .property(("path", well_known_uri.clone()));
+        let service = self
+            .data
+            .service_config
+            .map(|service_config| {
+                let service_config = service_config
+                    .property(("scheme", self.data.scheme))
+                    .property(("path", well_known_uri.clone()));
 
-            // Run service.
-            Service::run(service_config, self.data.http_address, self.data.port)?;
-        }
+                Service::run(service_config, self.data.http_address, self.data.port)
+            })
+            .transpose()?;
 
         // Create the main router.
         //
@@ -208,6 +210,11 @@ where
         axum::serve(listener, router)
             .with_graceful_shutdown(self.signal)
             .await?;
+
+        // Shutdown service
+        if let Some(service) = service {
+            service.shutdown()?;
+        }
 
         Ok(())
     }
