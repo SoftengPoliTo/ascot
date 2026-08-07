@@ -148,7 +148,7 @@ impl<'a> ServiceConfig<'a> {
 }
 
 // A new service.
-pub(crate) struct Service;
+pub(crate) struct Service(mdns_sd::ServiceDaemon);
 
 impl Service {
     // Runs a service.
@@ -157,8 +157,19 @@ impl Service {
         service_config: ServiceConfig<'_>,
         server_address: Ipv4Addr,
         port: u16,
-    ) -> Result<()> {
-        mdns_sd_impl::run(service_config, server_address, port)
+    ) -> Result<Self> {
+        Ok(Self(mdns_sd_impl::run(
+            service_config,
+            server_address,
+            port,
+        )?))
+    }
+
+    // Shutdowns a service.
+    #[inline]
+    pub(crate) fn shutdown(self) -> Result<()> {
+        drop(self.0.shutdown()?);
+        Ok(())
     }
 }
 
@@ -189,7 +200,7 @@ mod mdns_sd_impl {
         service_config: ServiceConfig<'_>,
         server_address: Ipv4Addr,
         server_port: u16,
-    ) -> std::result::Result<(), Error> {
+    ) -> std::result::Result<ServiceDaemon, Error> {
         // Create a new mDNS service daemon
         let mdns = ServiceDaemon::new()?;
 
@@ -263,6 +274,6 @@ mod mdns_sd_impl {
 
         mdns.register(service)?;
 
-        Ok(())
+        Ok(mdns)
     }
 }
